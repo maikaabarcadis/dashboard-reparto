@@ -296,9 +296,21 @@ Si no podés leer algún dato, usá null para ese campo.`;
       })
     });
     const data = await resp.json();
-    const txt = data.content.map(c => c.text || '').join('').trim();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    const txt = (data.content || []).map(c => c.text || '').join('').trim();
+    if (!txt) throw new Error('La API no devolvió texto. Revisá la API key o el saldo.');
     const clean = txt.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    let parsed;
+    try { parsed = JSON.parse(clean); } catch(e) { throw new Error('No se pudo parsear la respuesta: ' + txt.slice(0,200)); }
+    if (!parsed.filas && parsed.rows) parsed.filas = parsed.rows;
+    if (!parsed.filas && Array.isArray(parsed)) parsed = { filas: parsed };
+    if (!parsed.filas) parsed.filas = [];
+    parsed.filas = parsed.filas.map(f => ({
+      rep: f.rep || f.repartidor || f.nombre || '',
+      clientes: Number(f.clientes || f.cli || f.q_clientes || 0),
+      bultos: Number(f.bultos || f.bul || f.q_bultos || 0),
+      zona: f.zona || f.zone || ''
+    }));
     pendingData = parsed;
     showModal(parsed);
   } catch(err) {
