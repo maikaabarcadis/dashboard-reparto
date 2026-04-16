@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Reparto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f4f0; --card: #ffffff; --border: #e2ddd6;
+    --text: #2d2926; --sub: #7a746d; --accent: #c8a96e;
+    --accent2: #8b6f47; --green: #3d9970; --red: #c0392b; --blue: #2980b9;
+    --green-bg: #eafaf1; --red-bg: #fdf2f2; --blue-bg: #eaf4fb;
+    --tab-active: #c8a96e; --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  
+  header { background: var(--card); border-bottom: 2px solid var(--accent); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); flex-wrap: wrap; gap: 10px; }
+  header h1 { font-size: 1.25rem; font-weight: 700; color: var(--accent2); }
+  header span { font-size: 0.8rem; color: var(--sub); }
+  .key-wrap { display: flex; align-items: center; gap: 8px; }
+  .key-wrap input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; width: 220px; background: var(--bg); color: var(--text); }
+  .key-wrap button { padding: 5px 12px; border-radius: 6px; border: none; background: var(--accent2); color: white; font-size: 0.78rem; cursor: pointer; font-weight: 600; }
+  .key-status { font-size: 0.75rem; }
+
+  .tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; }
+  .tab { padding: 14px 20px; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--sub); border-bottom: 3px solid transparent; transition: all .2s; }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--tab-active); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+  .pane { display: none; } .pane.active { display: block; }
+
+  /* Upload area */
+  .upload-zone { border: 2px dashed var(--accent); border-radius: 12px; padding: 32px; text-align: center; background: #fdfaf5; cursor: pointer; transition: all .2s; margin-bottom: 20px; }
+  .upload-zone:hover, .upload-zone.dragover { background: #fdf3e0; border-color: var(--accent2); }
+  .upload-zone p { color: var(--sub); font-size: 0.9rem; margin-top: 8px; }
+  .upload-zone .icon { font-size: 2.5rem; }
+
+  /* Filters */
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; padding: 14px 16px; background: var(--card); border-radius: 10px; border: 1px solid var(--border); }
+  .filters label { font-size: 0.8rem; color: var(--sub); font-weight: 600; }
+  .filters input[type=date] { border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.85rem; background: var(--bg); }
+  .chip { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); font-size: 0.78rem; cursor: pointer; background: var(--bg); transition: all .15s; white-space: nowrap; }
+  .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-all { padding: 5px 14px; border-radius: 20px; border: none; background: var(--accent2); color: white; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+  .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+
+  /* KPI cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .kpi-card .label { font-size: 0.75rem; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .kpi-card .val { font-size: 1.8rem; font-weight: 700; color: var(--accent2); margin: 4px 0; }
+  .kpi-card .sub { font-size: 0.78rem; color: var(--sub); }
+
+  /* Charts */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .chart-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .chart-card h3 { font-size: 0.85rem; color: var(--sub); font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .4px; }
+  .chart-full { grid-column: 1 / -1; }
+  canvas { max-height: 240px; }
+
+  /* Tables */
+  .table-wrap { background: var(--card); border-radius: 10px; border: 1px solid var(--border); overflow: auto; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { padding: 10px 14px; background: #faf8f4; border-bottom: 2px solid var(--border); text-align: left; font-size: 0.78rem; color: var(--sub); text-transform: uppercase; letter-spacing: .4px; cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--accent2); }
+  th .sort-icon { margin-left: 4px; opacity: 0.5; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fdfaf5; }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+  .badge.green { background: var(--green-bg); color: var(--green); }
+  .badge.red { background: var(--red-bg); color: var(--red); }
+  .badge.blue { background: var(--blue-bg); color: var(--blue); }
+
+  /* Progress bar */
+  .prog-wrap { display: flex; align-items: center; gap: 8px; }
+  .prog-bg { flex: 1; height: 8px; background: #f0ece6; border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width .4s; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: 14px; padding: 28px; max-width: 560px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .modal h2 { font-size: 1.1rem; color: var(--accent2); margin-bottom: 16px; }
+  .modal .preview { background: #faf8f4; border-radius: 8px; padding: 14px; font-size: 0.85rem; margin-bottom: 16px; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); }
+  .modal .actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; transition: all .15s; }
+  .btn-confirm { background: var(--green); color: white; }
+  .btn-cancel { background: var(--border); color: var(--text); }
+  .btn-confirm:hover { background: #2d7a55; }
+
+  /* Loading */
+  .loading { display: none; text-align: center; padding: 20px; color: var(--sub); }
+  .loading.show { display: block; }
+  .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty { text-align: center; padding: 40px; color: var(--sub); font-size: 0.9rem; }
+  .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 12px; margin-top: 4px; }
+
+  .hist-row td:first-child { font-weight: 600; }
+  .del-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: 0.85rem; opacity: 0.7; }
+  .del-btn:hover { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 Dashboard Reparto</h1>
+  <div class="key-wrap">
+    <input type="password" id="api-key-input" placeholder="Pegá tu API key de Anthropic">
+    <button onclick="saveKey()">Guardar</button>
+    <span class="key-status" id="key-status"></span>
+  </div>
+  <span id="last-update">Sin datos aún</span>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="resumen">Resumen</div>
+  <div class="tab" data-tab="repartidores">Repartidores</div>
+  <div class="tab" data-tab="zonas">Zonas</div>
+  <div class="tab" data-tab="historial">Historial</div>
+</div>
+
+<div class="main">
+
+  <!-- Upload -->
+  <div class="upload-zone" id="upload-zone">
+    <div class="icon">📷</div>
+    <strong>Arrastrá la imagen del informe diario aquí</strong>
+    <p>o hacé clic para seleccionar • JPG, PNG, WEBP</p>
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+  </div>
+  <div class="loading" id="loading"><div class="spinner"></div><br>Leyendo imagen con IA...</div>
+
+  <!-- RESUMEN -->
+  <div class="pane active" id="pane-resumen">
+    <div class="filters" id="filter-resumen">
+      <label>Desde:</label><input type="date" id="r-desde">
+      <label>Hasta:</label><input type="date" id="r-hasta">
+      <button class="btn-all" onclick="setAll('resumen')">Todo</button>
+      <div class="chips-wrap" id="chips-resumen"></div>
+    </div>
+    <div class="kpi-grid" id="kpi-resumen"></div>
+    <div class="chart-grid">
+      <div class="chart-card chart-full"><h3>Evolución diaria</h3><canvas id="chart-evol"></canvas></div>
+    </div>
+  </div>
+
+  <!-- REPARTIDORES -->
+  <div class="pane" id="pane-repartidores">
+    <div class="filters" id="filter-rep">
+      <label>Desde:</label><input type="date" id="rep-desde">
+      <label>Hasta:</label><input type="date" id="rep-hasta">
+      <button class="btn-all" onclick="setAll('rep')">Todo</button>
+      <div class="chips-wrap" id="chips-rep"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card chart-full"><h3>Bultos por repartidor</h3><canvas id="chart-rep"></canvas></div>
+    </div>
+    <div class="section-title">Detalle por repartidor</div>
+    <div class="table-wrap"><table id="tbl-rep"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+  <!-- ZONAS -->
+  <div class="pane" id="pane-zonas">
+    <div class="filters" id="filter-zona">
+      <label>Desde:</label><input type="date" id="z-desde">
+      <label>Hasta:</label><input type="date" id="z-hasta">
+      <button class="btn-all" onclick="setAll('zona')">Todo</button>
+      <div class="chips-wrap" id="chips-zona"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card"><h3>Distribución bultos por zona</h3><canvas id="chart-zona"></canvas></div>
+      <div class="chart-card">
+        <h3>Detalle zonas</h3>
+        <div class="table-wrap" style="box-shadow:none;border:none"><table id="tbl-zona"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="pane" id="pane-historial">
+    <div class="section-title">Todos los registros</div>
+    <div class="table-wrap"><table id="tbl-hist"><thead></thead><tbody></tbody></table></div>
+  </div>
+
+</div>
+
+<!-- Modal confirmación -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>📋 Confirmar datos extraídos</h2>
+    <div class="preview" id="modal-preview"></div>
+    <div class="actions">
+      <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-confirm" onclick="confirmData()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── API Key ────────────────────────────────────────────────────────────────
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('sk-')) { alert('La key debe empezar con "sk-"'); return; }
+  localStorage.setItem('anthropic_key', val);
+  document.getElementById('api-key-input').value = '';
+  updateKeyStatus();
+}
+function getKey() { return localStorage.getItem('anthropic_key') || ''; }
+function updateKeyStatus() {
+  const k = getKey();
+  const el = document.getElementById('key-status');
+  if (k) { el.textContent = '✓ Key guardada'; el.style.color = 'var(--green)'; }
+  else { el.textContent = '⚠ Sin key'; el.style.color = 'var(--red)'; }
+}
+
+
+let records = JSON.parse(localStorage.getItem('reparto_v2') || '[]');
+let pendingData = null;
+let charts = {};
+let sortState = {};
+let activeFilters = { resumen: null, rep: null, zona: null };
+
+// ── Storage ────────────────────────────────────────────────────────────────
+function save() { localStorage.setItem('reparto_v2', JSON.stringify(records)); }
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('pane-' + t.dataset.tab).classList.add('active');
+    refreshAll();
+  });
+});
+
+// ── Upload ─────────────────────────────────────────────────────────────────
+const uz = document.getElementById('upload-zone');
+const fi = document.getElementById('file-input');
+uz.addEventListener('click', () => fi.click());
+fi.addEventListener('change', e => e.target.files[0] && processImage(e.target.files[0]));
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('dragover'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('dragover'));
+uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if(f) processImage(f); });
+
+async function processImage(file) {
+  const key = getKey();
+  if (!key) { alert('Primero guardá tu API key de Anthropic en el campo del encabezado.'); return; }
+  document.getElementById('loading').classList.add('show');
+  try {
+    const b64 = await toBase64(file);
+    const mediaType = file.type || 'image/jpeg';
+    const prompt = `Sos un extractor de datos preciso. Analizá esta imagen de un "Informe Diario de Reparto" y devolvé ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin backticks, sin markdown.
+
+El JSON debe tener exactamente esta estructura:
+{
+  "fecha": "YYYY-MM-DD",
+  "total_clientes": número,
+  "total_bultos": número,
+  "filas": [
+    {"rep": "nombre", "clientes": número, "bultos": número, "zona": "ZONA_SIN_LETRA"}
+  ]
+}
+
+REGLA CRÍTICA para zonas: cada zona tiene una letra inicial de orden de carga (ej: "A SVT", "B SOB", "C OBR"). Debés eliminar esa letra inicial y el espacio — la zona real es solo lo que viene después (ej: "SVT", "SOB", "OBR"). Si no hay letra de orden, dejá la zona como está.
+
+Si no podés leer algún dato, usá null para ese campo.`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+    const data = await resp.json();
+    const txt = data.content.map(c => c.text || '').join('').trim();
+    const clean = txt.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    pendingData = parsed;
+    showModal(parsed);
+  } catch(err) {
+    alert('Error al procesar la imagen: ' + err.message);
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+    fi.value = '';
+  }
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+function showModal(d) {
+  let html = `<b>Fecha:</b> ${d.fecha}<br><b>Total bultos:</b> ${d.total_bultos} | <b>Total clientes:</b> ${d.total_clientes}<br><br>`;
+  html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem">';
+  html += '<tr style="background:#f0ece6"><th style="padding:4px 8px;text-align:left">Repartidor</th><th style="padding:4px 8px">Clientes</th><th style="padding:4px 8px">Bultos</th><th style="padding:4px 8px">Zona</th></tr>';
+  (d.filas||[]).forEach(f => {
+    html += `<tr><td style="padding:4px 8px">${f.rep}</td><td style="padding:4px 8px;text-align:center">${f.clientes}</td><td style="padding:4px 8px;text-align:center">${f.bultos}</td><td style="padding:4px 8px">${f.zona}</td></tr>`;
+  });
+  html += '</table>';
+  document.getElementById('modal-preview').innerHTML = html;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); pendingData = null; }
+
+function confirmData() {
+  if (!pendingData) return;
+  const exists = records.findIndex(r => r.fecha === pendingData.fecha);
+  if (exists >= 0) {
+    if (!confirm(`Ya existe un registro para ${pendingData.fecha}. ¿Reemplazar?`)) return;
+    records.splice(exists, 1);
+  }
+  records.push(pendingData);
+  records.sort((a,b) => a.fecha.localeCompare(b.fecha));
+  save();
+  closeModal();
+  refreshAll();
+  updateLastUpdate();
+}
+
+function updateLastUpdate() {
+  if (records.length) document.getElementById('last-update').textContent = `Último: ${records[records.length-1].fecha}`;
+}
+
+// ── Filter helpers ─────────────────────────────────────────────────────────
+function getDates() { return [...new Set(records.map(r => r.fecha))].sort(); }
+
+function buildChips(containerId, prefix, onChange) {
+  const dates = getDates();
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  dates.forEach(d => {
+    const c = document.createElement('span');
+    c.className = 'chip' + (activeFilters[prefix] === d ? ' active' : '');
+    c.textContent = fmtDate(d);
+    c.onclick = () => {
+      activeFilters[prefix] = activeFilters[prefix] === d ? null : d;
+      buildChips(containerId, prefix, onChange);
+      onChange();
+    };
+    wrap.appendChild(c);
+  });
+}
+
+function setAll(prefix) {
+  activeFilters[prefix] = null;
+  const map = { resumen: ['r-desde','r-hasta'], rep: ['rep-desde','rep-hasta'], zona: ['z-desde','z-hasta'] };
+  map[prefix].forEach(id => document.getElementById(id).value = '');
+  refreshAll();
+}
+
+function filterRecords(prefix) {
+  if (activeFilters[prefix]) return records.filter(r => r.fecha === activeFilters[prefix]);
+  const map = { resumen: ['r-desde','r-hasta'], rep: ['rep-desde','rep-hasta'], zona: ['z-desde','z-hasta'] };
+  const [d1id, d2id] = map[prefix] || [];
+  const d1 = d1id ? document.getElementById(d1id)?.value : '';
+  const d2 = d2id ? document.getElementById(d2id)?.value : '';
+  return records.filter(r => (!d1 || r.fecha >= d1) && (!d2 || r.fecha <= d2));
+}
+
+function fmtDate(d) {
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y.slice(2)}`;
+}
+
+// ── Refresh all ────────────────────────────────────────────────────────────
+function refreshAll() {
+  updateLastUpdate();
+  buildChips('chips-resumen', 'resumen', refreshResumen);
+  buildChips('chips-rep', 'rep', refreshRep);
+  buildChips('chips-zona', 'zona', refreshZona);
+  document.getElementById('r-desde').onchange = refreshResumen;
+  document.getElementById('r-hasta').onchange = refreshResumen;
+  document.getElementById('rep-desde').onchange = refreshRep;
+  document.getElementById('rep-hasta').onchange = refreshRep;
+  document.getElementById('z-desde').onchange = refreshZona;
+  document.getElementById('z-hasta').onchange = refreshZona;
+  refreshResumen(); refreshRep(); refreshZona(); refreshHistorial();
+}
+
+// ── RESUMEN ────────────────────────────────────────────────────────────────
+function refreshResumen() {
+  const data = filterRecords('resumen');
+  if (!data.length) { document.getElementById('kpi-resumen').innerHTML = '<div class="empty">Sin datos para el período seleccionado</div>'; destroyChart('chart-evol'); return; }
+  const bultos = data.map(r => r.total_bultos || 0);
+  const clientes = data.map(r => r.total_clientes || 0);
+  const avgB = avg(bultos), avgC = avg(clientes);
+  const totalB = sum(bultos), totalC = sum(clientes);
+  const allRows = data.flatMap(r => r.filas || []);
+  const ratioBC = totalC ? (totalB/totalC).toFixed(2) : '—';
+
+  const kpis = [
+    { label: 'Total Bultos', val: fmt(totalB), sub: `Prom: ${fmt(Math.round(avgB))} / día` },
+    { label: 'Total Clientes', val: fmt(totalC), sub: `Prom: ${fmt(Math.round(avgC))} / día` },
+    { label: 'Ratio B/C Global', val: ratioBC, sub: 'bultos por cliente' },
+    { label: 'Días registrados', val: data.length, sub: '' },
+    { label: 'Máx. Bultos/día', val: fmt(Math.max(...bultos)), sub: '' },
+    { label: 'Mín. Bultos/día', val: fmt(Math.min(...bultos)), sub: '' },
+    { label: 'Máx. Clientes/día', val: fmt(Math.max(...clientes)), sub: '' },
+    { label: 'Mín. Clientes/día', val: fmt(Math.min(...clientes)), sub: '' },
+  ];
+  document.getElementById('kpi-resumen').innerHTML = kpis.map(k =>
+    `<div class="kpi-card"><div class="label">${k.label}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`
+  ).join('');
+
+  // Chart evolución
+  destroyChart('chart-evol');
+  const ctx = document.getElementById('chart-evol').getContext('2d');
+  charts['chart-evol'] = new Chart(ctx, {
+    data: {
+      labels: data.map(r => fmtDate(r.fecha)),
+      datasets: [
+        { type:'bar', label:'Bultos', data: bultos, backgroundColor: 'rgba(200,169,110,0.7)', yAxisID:'y' },
+        { type:'line', label:'Clientes', data: clientes, borderColor: '#8b6f47', borderDash:[5,4], pointBackgroundColor:'#8b6f47', fill:false, tension:.3, yAxisID:'y2' }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:true, plugins:{ legend:{ position:'top' } }, scales:{ y:{ position:'left', grid:{color:'#f0ece6'} }, y2:{ position:'right', grid:{drawOnChartArea:false} } } }
+  });
+}
+
+// ── REPARTIDORES ───────────────────────────────────────────────────────────
+function refreshRep() {
+  const data = filterRecords('rep');
+  if (!data.length) { document.getElementById('tbl-rep').querySelector('tbody').innerHTML = '<tr><td colspan="7" class="empty">Sin datos</td></tr>'; destroyChart('chart-rep'); return; }
+  const allRows = data.flatMap(r => r.filas || []);
+  const repMap = {};
+  allRows.forEach(row => {
+    const k = row.rep;
+    if (!repMap[k]) repMap[k] = { rep:k, bultos:0, clientes:0, dias:new Set(), dias_arr:[] };
+    repMap[k].bultos += row.bultos || 0;
+    repMap[k].clientes += row.clientes || 0;
+  });
+  data.forEach(r => { (r.filas||[]).forEach(f => { if(repMap[f.rep]) repMap[f.rep].dias.add(r.fecha); }); });
+  const reps = Object.values(repMap).map(r => ({
+    ...r, dias: r.dias.size,
+    bpd: r.dias.size ? (r.bultos/r.dias.size).toFixed(1) : 0,
+    cpd: r.dias.size ? (r.clientes/r.dias.size).toFixed(1) : 0,
+    ratioBC: r.clientes ? (r.bultos/r.clientes).toFixed(2) : 0
+  }));
+  const avgBultos = avg(reps.map(r => r.bultos));
+  const maxB = Math.max(...reps.map(r => r.bultos));
+
+  // Chart
+  destroyChart('chart-rep');
+  const ctx = document.getElementById('chart-rep').getContext('2d');
+  const sorted = [...reps].sort((a,b) => b.bultos-a.bultos);
+  charts['chart-rep'] = new Chart(ctx, {
+    type:'bar',
+    data: { labels: sorted.map(r=>r.rep), datasets:[{ label:'Bultos', data: sorted.map(r=>r.bultos), backgroundColor:'rgba(200,169,110,0.75)', borderColor:'#c8a96e', borderWidth:1 }] },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:true, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'#f0ece6'}}} }
+  });
+
+  renderSortableTable('tbl-rep',
+    [
+      { key:'rep', label:'Repartidor' },
+      { key:'bultos', label:'Bultos Tot.' },
+      { key:'clientes', label:'Clientes Tot.' },
+      { key:'dias', label:'Días' },
+      { key:'bpd', label:'Bultos/Día' },
+      { key:'ratioBC', label:'B/C' },
+      { key:'vs', label:'vs Promedio' }
+    ],
+    reps,
+    (row) => {
+      const pct = avgBultos ? ((row.bultos - avgBultos)/avgBultos*100) : 0;
+      const badge = pct >= 10 ? 'green' : pct <= -10 ? 'red' : 'blue';
+      const sign = pct > 0 ? '+' : '';
+      return {
+        ...row,
+        bultos: fmt(row.bultos),
+        clientes: fmt(row.clientes),
+        bpd: fmtD(row.bpd),
+        vs: `<span class="badge ${badge}">${sign}${pct.toFixed(1)}%</span>`
+      };
+    }
+  );
+}
+
+// ── ZONAS ──────────────────────────────────────────────────────────────────
+function refreshZona() {
+  const data = filterRecords('zona');
+  if (!data.length) { document.getElementById('tbl-zona').querySelector('tbody').innerHTML = '<tr><td colspan="5" class="empty">Sin datos</td></tr>'; destroyChart('chart-zona'); return; }
+  const allRows = data.flatMap(r => r.filas || []);
+  const zonaMap = {};
+  allRows.forEach(row => {
+    const z = row.zona || 'Sin zona';
+    if (!zonaMap[z]) zonaMap[z] = { zona:z, bultos:0, clientes:0 };
+    zonaMap[z].bultos += row.bultos || 0;
+    zonaMap[z].clientes += row.clientes || 0;
+  });
+  const totalB = sum(Object.values(zonaMap).map(z=>z.bultos));
+  const zonas = Object.values(zonaMap).map(z => ({
+    ...z,
+    bultos_fmt: fmt(z.bultos),
+    clientes_fmt: fmt(z.clientes),
+    pct: totalB ? (z.bultos/totalB*100).toFixed(1) + '%' : '0%',
+    ratioBC: z.clientes ? (z.bultos/z.clientes).toFixed(2) : 0
+  })).sort((a,b)=>b.bultos-a.bultos);
+
+  destroyChart('chart-zona');
+  const colors = ['#c8a96e','#8b6f47','#e8c48e','#6b4f2a','#d4a96e','#a07850','#f0d4a0','#704030'];
+  const ctx = document.getElementById('chart-zona').getContext('2d');
+  charts['chart-zona'] = new Chart(ctx, {
+    type:'doughnut',
+    data: { labels: zonas.map(z=>z.zona), datasets:[{ data: zonas.map(z=>z.bultos), backgroundColor: colors.slice(0,zonas.length) }] },
+    options: { responsive:true, maintainAspectRatio:true, plugins:{ legend:{ position:'right', labels:{ font:{size:11} } } } }
+  });
+
+  renderSortableTable('tbl-zona',
+    [ { key:'zona',label:'Zona' }, { key:'bultos_fmt',label:'Bultos' }, { key:'clientes_fmt',label:'Clientes' }, { key:'pct',label:'% Total' }, { key:'ratioBC',label:'B/C' } ],
+    zonas, r => r
+  );
+}
+
+// ── HISTORIAL ──────────────────────────────────────────────────────────────
+function refreshHistorial() {
+  const tbl = document.getElementById('tbl-hist');
+  const thead = tbl.querySelector('thead');
+  const tbody = tbl.querySelector('tbody');
+  thead.innerHTML = '<tr><th>Fecha</th><th>Bultos</th><th>Clientes</th><th>Repartidores</th><th>Acciones</th></tr>';
+  if (!records.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin registros</td></tr>'; return; }
+  tbody.innerHTML = records.slice().reverse().map((r,i) => {
+    const idx = records.length - 1 - i;
+    return `<tr class="hist-row">
+      <td>${fmtDate(r.fecha)}</td>
+      <td>${r.total_bultos}</td>
+      <td>${r.total_clientes}</td>
+      <td>${(r.filas||[]).map(f=>f.rep).join(', ')}</td>
+      <td><button class="del-btn" onclick="deleteRecord(${idx})">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteRecord(idx) {
+  if (!confirm('¿Eliminar este registro?')) return;
+  records.splice(idx, 1);
+  save(); refreshAll();
+}
+
+// ── Sortable table ─────────────────────────────────────────────────────────
+function renderSortableTable(tableId, cols, rows, transform) {
+  const tbl = document.getElementById(tableId);
+  const sk = sortState[tableId] || { col: null, asc: true };
+  let sorted = [...rows];
+  if (sk.col) sorted.sort((a,b) => {
+    const av = parseFloat(a[sk.col]) || a[sk.col] || '';
+    const bv = parseFloat(b[sk.col]) || b[sk.col] || '';
+    return sk.asc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  });
+  tbl.querySelector('thead').innerHTML = '<tr>' + cols.map(c =>
+    `<th onclick="sortTable('${tableId}','${c.key}')">${c.label}<span class="sort-icon">${sk.col===c.key ? (sk.asc?'▲':'▼') : '↕'}</span></th>`
+  ).join('') + '</tr>';
+  const xformed = sorted.map(r => transform ? transform(r) : r);
+  tbl.querySelector('tbody').innerHTML = xformed.map(r =>
+    '<tr>' + cols.map(c => `<td>${r[c.key] ?? '—'}</td>`).join('') + '</tr>'
+  ).join('');
+}
+
+function sortTable(tableId, col) {
+  const sk = sortState[tableId] || { col: null, asc: true };
+  sortState[tableId] = { col, asc: sk.col === col ? !sk.asc : true };
+  refreshAll();
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function sum(arr) { return arr.reduce((a,b)=>a+(+b||0),0); }
+function avg(arr) { return arr.length ? sum(arr)/arr.length : 0; }
+function fmt(n) { return Number(n).toLocaleString('es-AR'); }
+function fmtD(n) { return Number(n).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:1}); }
+function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+// ── Init ───────────────────────────────────────────────────────────────────
+updateKeyStatus();
+refreshAll();
+</script>
+</body>
+</html>
