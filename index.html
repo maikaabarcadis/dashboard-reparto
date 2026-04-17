@@ -15,10 +15,9 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  
+
   header { background: var(--card); border-bottom: 2px solid var(--accent); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); flex-wrap: wrap; gap: 10px; }
   header h1 { font-size: 1.25rem; font-weight: 700; color: var(--accent2); }
-  header span { font-size: 0.8rem; color: var(--sub); }
   .key-wrap { display: flex; align-items: center; gap: 8px; }
   .key-wrap input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; width: 220px; background: var(--bg); color: var(--text); }
   .key-wrap button { padding: 5px 12px; border-radius: 6px; border: none; background: var(--accent2); color: white; font-size: 0.78rem; cursor: pointer; font-weight: 600; }
@@ -32,13 +31,11 @@
   .main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
   .pane { display: none; } .pane.active { display: block; }
 
-  /* Upload area */
   .upload-zone { border: 2px dashed var(--accent); border-radius: 12px; padding: 32px; text-align: center; background: #fdfaf5; cursor: pointer; transition: all .2s; margin-bottom: 20px; }
   .upload-zone:hover, .upload-zone.dragover { background: #fdf3e0; border-color: var(--accent2); }
   .upload-zone p { color: var(--sub); font-size: 0.9rem; margin-top: 8px; }
   .upload-zone .icon { font-size: 2.5rem; }
 
-  /* Filters */
   .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; padding: 14px 16px; background: var(--card); border-radius: 10px; border: 1px solid var(--border); }
   .filters label { font-size: 0.8rem; color: var(--sub); font-weight: 600; }
   .filters input[type=date] { border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.85rem; background: var(--bg); }
@@ -47,54 +44,59 @@
   .btn-all { padding: 5px 14px; border-radius: 20px; border: none; background: var(--accent2); color: white; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
   .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
 
-  /* KPI cards */
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .kpi-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
   .kpi-card .label { font-size: 0.75rem; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
   .kpi-card .val { font-size: 1.8rem; font-weight: 700; color: var(--accent2); margin: 4px 0; }
   .kpi-card .sub { font-size: 0.78rem; color: var(--sub); }
 
-  /* Charts */
   .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
   .chart-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
   .chart-card h3 { font-size: 0.85rem; color: var(--sub); font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .4px; }
   .chart-full { grid-column: 1 / -1; }
   canvas { max-height: 240px; }
 
-  /* Tables */
   .table-wrap { background: var(--card); border-radius: 10px; border: 1px solid var(--border); overflow: auto; box-shadow: var(--shadow); }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   th { padding: 10px 14px; background: #faf8f4; border-bottom: 2px solid var(--border); text-align: left; font-size: 0.78rem; color: var(--sub); text-transform: uppercase; letter-spacing: .4px; cursor: pointer; user-select: none; white-space: nowrap; }
   th:hover { color: var(--accent2); }
-  th .sort-icon { margin-left: 4px; opacity: 0.5; }
   td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fdfaf5; }
 
-  /* Badge */
   .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
   .badge.green { background: var(--green-bg); color: var(--green); }
   .badge.red { background: var(--red-bg); color: var(--red); }
   .badge.blue { background: var(--blue-bg); color: var(--blue); }
 
-  /* Progress bar */
-  .prog-wrap { display: flex; align-items: center; gap: 8px; }
-  .prog-bg { flex: 1; height: 8px; background: #f0ece6; border-radius: 4px; overflow: hidden; }
-  .prog-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width .4s; }
-
   /* Modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--card); border-radius: 14px; padding: 28px; max-width: 560px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+  .modal { background: var(--card); border-radius: 14px; padding: 24px; max-width: 640px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto; }
   .modal h2 { font-size: 1.1rem; color: var(--accent2); margin-bottom: 16px; }
-  .modal .preview { background: #faf8f4; border-radius: 8px; padding: 14px; font-size: 0.85rem; margin-bottom: 16px; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); }
-  .modal .actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .modal .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
   .btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; transition: all .15s; }
   .btn-confirm { background: var(--green); color: white; }
   .btn-cancel { background: var(--border); color: var(--text); }
+  .btn-add-row { background: var(--accent); color: white; font-size: 0.8rem; padding: 6px 14px; }
   .btn-confirm:hover { background: #2d7a55; }
 
-  /* Loading */
+  /* Edit form inside modal */
+  .edit-header { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .edit-field { display: flex; flex-direction: column; gap: 4px; }
+  .edit-field label { font-size: 0.75rem; color: var(--sub); font-weight: 600; text-transform: uppercase; }
+  .edit-field input { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; background: var(--bg); width: 100%; }
+  .edit-field input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+
+  .edit-table-wrap { overflow-x: auto; margin-bottom: 8px; }
+  .edit-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  .edit-table th { padding: 7px 8px; background: #faf8f4; border-bottom: 2px solid var(--border); text-align: left; font-size: 0.75rem; color: var(--sub); text-transform: uppercase; white-space: nowrap; }
+  .edit-table td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
+  .edit-table input { border: 1px solid var(--border); border-radius: 4px; padding: 4px 7px; font-size: 0.83rem; background: var(--bg); width: 100%; min-width: 70px; }
+  .edit-table input:focus { outline: 2px solid var(--accent); }
+  .edit-table .del-row-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: 1rem; padding: 2px 6px; opacity: 0.7; }
+  .edit-table .del-row-btn:hover { opacity: 1; }
+
   .loading { display: none; text-align: center; padding: 20px; color: var(--sub); }
   .loading.show { display: block; }
   .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 8px; }
@@ -102,15 +104,17 @@
 
   .empty { text-align: center; padding: 40px; color: var(--sub); font-size: 0.9rem; }
   .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 12px; margin-top: 4px; }
-
   .hist-row td:first-child { font-weight: 600; }
-  .del-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: 0.85rem; opacity: 0.7; }
-  .del-btn:hover { opacity: 1; }
+  .action-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; opacity: 0.7; padding: 2px 4px; }
+  .action-btn:hover { opacity: 1; }
+  .action-btn.edit { color: var(--blue); }
+  .action-btn.del { color: var(--red); }
 
   @media (max-width: 600px) {
     .chart-grid { grid-template-columns: 1fr; }
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .main { padding: 12px; }
+    .edit-header { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
@@ -134,8 +138,6 @@
 </div>
 
 <div class="main">
-
-  <!-- Upload -->
   <div class="upload-zone" id="upload-zone">
     <div class="icon">📷</div>
     <strong>Arrastrá la imagen del informe diario aquí</strong>
@@ -144,9 +146,8 @@
   </div>
   <div class="loading" id="loading"><div class="spinner"></div><br>Leyendo imagen con IA...</div>
 
-  <!-- RESUMEN -->
   <div class="pane active" id="pane-resumen">
-    <div class="filters" id="filter-resumen">
+    <div class="filters">
       <label>Desde:</label><input type="date" id="r-desde">
       <label>Hasta:</label><input type="date" id="r-hasta">
       <button class="btn-all" onclick="setAll('resumen')">Todo</button>
@@ -158,9 +159,8 @@
     </div>
   </div>
 
-  <!-- REPARTIDORES -->
   <div class="pane" id="pane-repartidores">
-    <div class="filters" id="filter-rep">
+    <div class="filters">
       <label>Desde:</label><input type="date" id="rep-desde">
       <label>Hasta:</label><input type="date" id="rep-hasta">
       <button class="btn-all" onclick="setAll('rep')">Todo</button>
@@ -173,9 +173,8 @@
     <div class="table-wrap"><table id="tbl-rep"><thead></thead><tbody></tbody></table></div>
   </div>
 
-  <!-- ZONAS -->
   <div class="pane" id="pane-zonas">
-    <div class="filters" id="filter-zona">
+    <div class="filters">
       <label>Desde:</label><input type="date" id="z-desde">
       <label>Hasta:</label><input type="date" id="z-hasta">
       <button class="btn-all" onclick="setAll('zona')">Todo</button>
@@ -190,19 +189,48 @@
     </div>
   </div>
 
-  <!-- HISTORIAL -->
   <div class="pane" id="pane-historial">
     <div class="section-title">Todos los registros</div>
     <div class="table-wrap"><table id="tbl-hist"><thead></thead><tbody></tbody></table></div>
   </div>
-
 </div>
 
-<!-- Modal confirmación -->
+<!-- Modal edición/confirmación -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h2>📋 Confirmar datos extraídos</h2>
-    <div class="preview" id="modal-preview"></div>
+    <h2 id="modal-title">📋 Confirmar y editar datos</h2>
+
+    <div class="edit-header">
+      <div class="edit-field">
+        <label>Fecha</label>
+        <input type="date" id="ed-fecha">
+      </div>
+      <div class="edit-field">
+        <label>Total Bultos</label>
+        <input type="number" id="ed-bultos" min="0">
+      </div>
+      <div class="edit-field">
+        <label>Total Clientes</label>
+        <input type="number" id="ed-clientes" min="0">
+      </div>
+    </div>
+
+    <div class="edit-table-wrap">
+      <table class="edit-table">
+        <thead>
+          <tr>
+            <th>Repartidor</th>
+            <th>Clientes</th>
+            <th>Bultos</th>
+            <th>Zona</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="ed-rows"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-add-row" onclick="addEditRow()">+ Agregar fila</button>
+
     <div class="actions">
       <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-confirm" onclick="confirmData()">✓ Guardar</button>
@@ -227,14 +255,13 @@ function updateKeyStatus() {
   else { el.textContent = '⚠ Sin key'; el.style.color = 'var(--red)'; }
 }
 
-
+// ── State ──────────────────────────────────────────────────────────────────
 let records = JSON.parse(localStorage.getItem('reparto_v2') || '[]');
-let pendingData = null;
+let editingIndex = null; // null = nuevo registro, número = editar existente
 let charts = {};
 let sortState = {};
 let activeFilters = { resumen: null, rep: null, zona: null };
 
-// ── Storage ────────────────────────────────────────────────────────────────
 function save() { localStorage.setItem('reparto_v2', JSON.stringify(records)); }
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
@@ -282,7 +309,12 @@ Si no podés leer algún dato, usá null para ese campo.`;
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-haiku-4-5',
         max_tokens: 1000,
@@ -301,7 +333,7 @@ Si no podés leer algún dato, usá null para ese campo.`;
     if (!txt) throw new Error('Respuesta vacía. Raw: ' + JSON.stringify(data).slice(0,400));
     const clean = txt.replace(/```json|```/g, '').trim();
     let parsed;
-    try { parsed = JSON.parse(clean); } catch(e) { throw new Error('JSON inválido recibido: ' + clean.slice(0,300)); }
+    try { parsed = JSON.parse(clean); } catch(e) { throw new Error('JSON inválido: ' + clean.slice(0,300)); }
     if (!parsed.filas && parsed.rows) parsed.filas = parsed.rows;
     if (!parsed.filas && Array.isArray(parsed)) parsed = { filas: parsed };
     if (!parsed.filas) parsed.filas = [];
@@ -311,8 +343,8 @@ Si no podés leer algún dato, usá null para ese campo.`;
       bultos: Number(f.bultos || f.bul || f.q_bultos || 0),
       zona: f.zona || f.zone || ''
     }));
-    pendingData = parsed;
-    showModal(parsed);
+    editingIndex = null;
+    openModal(parsed, '📋 Confirmar y editar datos extraídos');
   } catch(err) {
     alert('Error al procesar la imagen: ' + err.message);
   } finally {
@@ -330,30 +362,79 @@ function toBase64(file) {
   });
 }
 
-// ── Modal ──────────────────────────────────────────────────────────────────
-function showModal(d) {
-  let html = `<b>Fecha:</b> ${d.fecha}<br><b>Total bultos:</b> ${d.total_bultos} | <b>Total clientes:</b> ${d.total_clientes}<br><br>`;
-  html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem">';
-  html += '<tr style="background:#f0ece6"><th style="padding:4px 8px;text-align:left">Repartidor</th><th style="padding:4px 8px">Clientes</th><th style="padding:4px 8px">Bultos</th><th style="padding:4px 8px">Zona</th></tr>';
-  (d.filas||[]).forEach(f => {
-    html += `<tr><td style="padding:4px 8px">${f.rep}</td><td style="padding:4px 8px;text-align:center">${f.clientes}</td><td style="padding:4px 8px;text-align:center">${f.bultos}</td><td style="padding:4px 8px">${f.zona}</td></tr>`;
-  });
-  html += '</table>';
-  document.getElementById('modal-preview').innerHTML = html;
+// ── Modal edición ──────────────────────────────────────────────────────────
+function openModal(d, title) {
+  document.getElementById('modal-title').textContent = title || '📋 Editar registro';
+  document.getElementById('ed-fecha').value = d.fecha || '';
+  document.getElementById('ed-bultos').value = d.total_bultos || '';
+  document.getElementById('ed-clientes').value = d.total_clientes || '';
+  renderEditRows(d.filas || []);
   document.getElementById('modal').classList.add('open');
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); pendingData = null; }
+function renderEditRows(filas) {
+  const tbody = document.getElementById('ed-rows');
+  tbody.innerHTML = filas.map((f, i) => `
+    <tr>
+      <td><input value="${f.rep||''}" oninput="updateRow(${i},'rep',this.value)"></td>
+      <td><input type="number" value="${f.clientes||0}" min="0" oninput="updateRow(${i},'clientes',this.value)"></td>
+      <td><input type="number" value="${f.bultos||0}" min="0" oninput="updateRow(${i},'bultos',this.value)"></td>
+      <td><input value="${f.zona||''}" oninput="updateRow(${i},'zona',this.value)"></td>
+      <td><button class="del-row-btn" onclick="removeEditRow(${i})">✕</button></td>
+    </tr>
+  `).join('');
+  // guardar referencia de filas en memoria temporal
+  window._editFilas = filas.map(f => ({...f}));
+}
+
+function updateRow(i, field, val) {
+  if (!window._editFilas) return;
+  window._editFilas[i][field] = (field === 'clientes' || field === 'bultos') ? Number(val) : val;
+}
+
+function removeEditRow(i) {
+  window._editFilas.splice(i, 1);
+  renderEditRows(window._editFilas);
+}
+
+function addEditRow() {
+  if (!window._editFilas) window._editFilas = [];
+  window._editFilas.push({ rep: '', clientes: 0, bultos: 0, zona: '' });
+  renderEditRows(window._editFilas);
+}
+
+function getModalData() {
+  return {
+    fecha: document.getElementById('ed-fecha').value,
+    total_bultos: Number(document.getElementById('ed-bultos').value) || 0,
+    total_clientes: Number(document.getElementById('ed-clientes').value) || 0,
+    filas: (window._editFilas || []).filter(f => f.rep)
+  };
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  window._editFilas = [];
+  editingIndex = null;
+}
 
 function confirmData() {
-  if (!pendingData) return;
-  const exists = records.findIndex(r => r.fecha === pendingData.fecha);
-  if (exists >= 0) {
-    if (!confirm(`Ya existe un registro para ${pendingData.fecha}. ¿Reemplazar?`)) return;
-    records.splice(exists, 1);
+  const d = getModalData();
+  if (!d.fecha) { alert('La fecha es obligatoria.'); return; }
+
+  if (editingIndex !== null) {
+    // editar existente
+    records[editingIndex] = d;
+  } else {
+    // nuevo registro
+    const exists = records.findIndex(r => r.fecha === d.fecha);
+    if (exists >= 0) {
+      if (!confirm(`Ya existe un registro para ${d.fecha}. ¿Reemplazar?`)) return;
+      records.splice(exists, 1);
+    }
+    records.push(d);
+    records.sort((a,b) => a.fecha.localeCompare(b.fecha));
   }
-  records.push(pendingData);
-  records.sort((a,b) => a.fecha.localeCompare(b.fecha));
   save();
   closeModal();
   refreshAll();
@@ -428,7 +509,6 @@ function refreshResumen() {
   const clientes = data.map(r => r.total_clientes || 0);
   const avgB = avg(bultos), avgC = avg(clientes);
   const totalB = sum(bultos), totalC = sum(clientes);
-  const allRows = data.flatMap(r => r.filas || []);
   const ratioBC = totalC ? (totalB/totalC).toFixed(2) : '—';
 
   const kpis = [
@@ -445,7 +525,6 @@ function refreshResumen() {
     `<div class="kpi-card"><div class="label">${k.label}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`
   ).join('');
 
-  // Chart evolución
   destroyChart('chart-evol');
   const ctx = document.getElementById('chart-evol').getContext('2d');
   charts['chart-evol'] = new Chart(ctx, {
@@ -468,7 +547,7 @@ function refreshRep() {
   const repMap = {};
   allRows.forEach(row => {
     const k = row.rep;
-    if (!repMap[k]) repMap[k] = { rep:k, bultos:0, clientes:0, dias:new Set(), dias_arr:[] };
+    if (!repMap[k]) repMap[k] = { rep:k, bultos:0, clientes:0, dias:new Set() };
     repMap[k].bultos += row.bultos || 0;
     repMap[k].clientes += row.clientes || 0;
   });
@@ -476,13 +555,10 @@ function refreshRep() {
   const reps = Object.values(repMap).map(r => ({
     ...r, dias: r.dias.size,
     bpd: r.dias.size ? (r.bultos/r.dias.size).toFixed(1) : 0,
-    cpd: r.dias.size ? (r.clientes/r.dias.size).toFixed(1) : 0,
     ratioBC: r.clientes ? (r.bultos/r.clientes).toFixed(2) : 0
   }));
   const avgBultos = avg(reps.map(r => r.bultos));
-  const maxB = Math.max(...reps.map(r => r.bultos));
 
-  // Chart
   destroyChart('chart-rep');
   const ctx = document.getElementById('chart-rep').getContext('2d');
   const sorted = [...reps].sort((a,b) => b.bultos-a.bultos);
@@ -493,27 +569,13 @@ function refreshRep() {
   });
 
   renderSortableTable('tbl-rep',
-    [
-      { key:'rep', label:'Repartidor' },
-      { key:'bultos', label:'Bultos Tot.' },
-      { key:'clientes', label:'Clientes Tot.' },
-      { key:'dias', label:'Días' },
-      { key:'bpd', label:'Bultos/Día' },
-      { key:'ratioBC', label:'B/C' },
-      { key:'vs', label:'vs Promedio' }
-    ],
+    [ {key:'rep',label:'Repartidor'}, {key:'bultos',label:'Bultos Tot.'}, {key:'clientes',label:'Clientes Tot.'}, {key:'dias',label:'Días'}, {key:'bpd',label:'Bultos/Día'}, {key:'ratioBC',label:'B/C'}, {key:'vs',label:'vs Promedio'} ],
     reps,
     (row) => {
       const pct = avgBultos ? ((row.bultos - avgBultos)/avgBultos*100) : 0;
       const badge = pct >= 10 ? 'green' : pct <= -10 ? 'red' : 'blue';
       const sign = pct > 0 ? '+' : '';
-      return {
-        ...row,
-        bultos: fmt(row.bultos),
-        clientes: fmt(row.clientes),
-        bpd: fmtD(row.bpd),
-        vs: `<span class="badge ${badge}">${sign}${pct.toFixed(1)}%</span>`
-      };
+      return { ...row, bultos: fmt(row.bultos), clientes: fmt(row.clientes), bpd: fmtD(row.bpd), vs: `<span class="badge ${badge}">${sign}${pct.toFixed(1)}%</span>` };
     }
   );
 }
@@ -533,8 +595,7 @@ function refreshZona() {
   const totalB = sum(Object.values(zonaMap).map(z=>z.bultos));
   const zonas = Object.values(zonaMap).map(z => ({
     ...z,
-    bultos_fmt: fmt(z.bultos),
-    clientes_fmt: fmt(z.clientes),
+    bultos_fmt: fmt(z.bultos), clientes_fmt: fmt(z.clientes),
     pct: totalB ? (z.bultos/totalB*100).toFixed(1) + '%' : '0%',
     ratioBC: z.clientes ? (z.bultos/z.clientes).toFixed(2) : 0
   })).sort((a,b)=>b.bultos-a.bultos);
@@ -549,7 +610,7 @@ function refreshZona() {
   });
 
   renderSortableTable('tbl-zona',
-    [ { key:'zona',label:'Zona' }, { key:'bultos_fmt',label:'Bultos' }, { key:'clientes_fmt',label:'Clientes' }, { key:'pct',label:'% Total' }, { key:'ratioBC',label:'B/C' } ],
+    [ {key:'zona',label:'Zona'}, {key:'bultos_fmt',label:'Bultos'}, {key:'clientes_fmt',label:'Clientes'}, {key:'pct',label:'% Total'}, {key:'ratioBC',label:'B/C'} ],
     zonas, r => r
   );
 }
@@ -565,12 +626,20 @@ function refreshHistorial() {
     const idx = records.length - 1 - i;
     return `<tr class="hist-row">
       <td>${fmtDate(r.fecha)}</td>
-      <td>${r.total_bultos}</td>
-      <td>${r.total_clientes}</td>
+      <td>${fmt(r.total_bultos)}</td>
+      <td>${fmt(r.total_clientes)}</td>
       <td>${(r.filas||[]).map(f=>f.rep).join(', ')}</td>
-      <td><button class="del-btn" onclick="deleteRecord(${idx})">🗑</button></td>
+      <td>
+        <button class="action-btn edit" onclick="editRecord(${idx})" title="Editar">✏️</button>
+        <button class="action-btn del" onclick="deleteRecord(${idx})" title="Eliminar">🗑</button>
+      </td>
     </tr>`;
   }).join('');
+}
+
+function editRecord(idx) {
+  editingIndex = idx;
+  openModal(records[idx], '✏️ Editar registro — ' + fmtDate(records[idx].fecha));
 }
 
 function deleteRecord(idx) {
@@ -590,7 +659,7 @@ function renderSortableTable(tableId, cols, rows, transform) {
     return sk.asc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
   });
   tbl.querySelector('thead').innerHTML = '<tr>' + cols.map(c =>
-    `<th onclick="sortTable('${tableId}','${c.key}')">${c.label}<span class="sort-icon">${sk.col===c.key ? (sk.asc?'▲':'▼') : '↕'}</span></th>`
+    `<th onclick="sortTable('${tableId}','${c.key}')">${c.label}<span style="margin-left:4px;opacity:.5">${sk.col===c.key?(sk.asc?'▲':'▼'):'↕'}</span></th>`
   ).join('') + '</tr>';
   const xformed = sorted.map(r => transform ? transform(r) : r);
   tbl.querySelector('tbody').innerHTML = xformed.map(r =>
