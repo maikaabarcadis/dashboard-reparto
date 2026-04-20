@@ -136,7 +136,7 @@
     <div class="icon">📷</div>
     <strong>Arrastrá la imagen del informe diario aquí</strong>
     <p>o hacé clic para seleccionar • JPG, PNG, WEBP</p>
-    <input type="file" id="file-input" accept="image/*" style="display:none">
+    <input type="file" id="file-input" accept="image/*" multiple style="display:none">
   </div>
   <div class="loading" id="loading"><div class="spinner"></div><br>Leyendo imagen con IA...</div>
 
@@ -394,10 +394,21 @@ document.querySelectorAll('.tab').forEach(t => {
 // ── Upload ─────────────────────────────────────────────────────────────────
 const uz = document.getElementById('upload-zone'), fi = document.getElementById('file-input');
 uz.addEventListener('click', () => fi.click());
-fi.addEventListener('change', e => e.target.files[0] && processImage(e.target.files[0]));
+fi.addEventListener('change', e => e.target.files.length && processQueue([...e.target.files]));
 uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('dragover'); });
 uz.addEventListener('dragleave', () => uz.classList.remove('dragover'));
-uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if(f) processImage(f); });
+uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('dragover'); const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/')); if(files.length) processQueue(files); });
+
+// ── Queue ──────────────────────────────────────────────────────────────────
+let _queue = [], _queueIdx = 0;
+async function processQueue(files) {
+  _queue = files; _queueIdx = 0;
+  await processNext();
+}
+async function processNext() {
+  if (_queueIdx >= _queue.length) { _queue=[]; _queueIdx=0; fi.value=''; return; }
+  await processImage(_queue[_queueIdx]);
+}
 
 async function processImage(file) {
   const key = getKey();
@@ -428,7 +439,8 @@ async function processImage(file) {
     }));
     parsed = normalizeRecord(parsed);
     editingIndex = null;
-    openModal(parsed, '📋 Confirmar y editar datos extraídos');
+    const remaining = _queue.length > 1 ? ` (${_queueIdx+1} de ${_queue.length})` : '';
+    openModal(parsed, `📋 Confirmar datos extraídos${remaining}`);
   } catch(err) { alert('Error: ' + err.message); }
   finally { document.getElementById('loading').classList.remove('show'); fi.value = ''; }
 }
