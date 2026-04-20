@@ -7,131 +7,112 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #f5f4f0; --card: #ffffff; --border: #e2ddd6;
-    --text: #2d2926; --sub: #7a746d; --accent: #c8a96e;
-    --accent2: #8b6f47; --green: #3d9970; --red: #c0392b; --blue: #2980b9;
-    --green-bg: #eafaf1; --red-bg: #fdf2f2; --blue-bg: #eaf4fb;
-    --tab-active: #c8a96e; --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --bg:#f5f4f0;--card:#fff;--border:#e2ddd6;--text:#2d2926;--sub:#7a746d;
+    --accent:#c8a96e;--accent2:#8b6f47;--green:#3d9970;--red:#c0392b;--blue:#2980b9;
+    --green-bg:#eafaf1;--red-bg:#fdf2f2;--blue-bg:#eaf4fb;--shadow:0 2px 8px rgba(0,0,0,.08);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-
-  header { background: var(--card); border-bottom: 2px solid var(--accent); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow); flex-wrap: wrap; gap: 10px; }
-  header h1 { font-size: 1.25rem; font-weight: 700; color: var(--accent2); }
-  .key-wrap { display: flex; align-items: center; gap: 8px; }
-  .key-wrap input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; width: 220px; background: var(--bg); color: var(--text); }
-  .key-wrap button { padding: 5px 12px; border-radius: 6px; border: none; background: var(--accent2); color: white; font-size: 0.78rem; cursor: pointer; font-weight: 600; }
-  .key-status { font-size: 0.75rem; }
-
-  .tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; }
-  .tab { padding: 14px 20px; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--sub); border-bottom: 3px solid transparent; transition: all .2s; }
-  .tab.active { color: var(--accent2); border-bottom-color: var(--tab-active); }
-  .tab:hover:not(.active) { color: var(--text); }
-
-  .main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
-  .pane { display: none; } .pane.active { display: block; }
-
-  .upload-zone { border: 2px dashed var(--accent); border-radius: 12px; padding: 32px; text-align: center; background: #fdfaf5; cursor: pointer; transition: all .2s; margin-bottom: 20px; }
-  .upload-zone:hover, .upload-zone.dragover { background: #fdf3e0; border-color: var(--accent2); }
-  .upload-zone p { color: var(--sub); font-size: 0.9rem; margin-top: 8px; }
-  .upload-zone .icon { font-size: 2.5rem; }
-
-  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; padding: 14px 16px; background: var(--card); border-radius: 10px; border: 1px solid var(--border); }
-  .filters label { font-size: 0.8rem; color: var(--sub); font-weight: 600; }
-  .filters input[type=date] { border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 0.85rem; background: var(--bg); }
-  .chip { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); font-size: 0.78rem; cursor: pointer; background: var(--bg); transition: all .15s; white-space: nowrap; }
-  .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
-  .btn-all { padding: 5px 14px; border-radius: 20px; border: none; background: var(--accent2); color: white; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
-  .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
-
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
-  .kpi-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
-  .kpi-card .label { font-size: 0.75rem; color: var(--sub); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
-  .kpi-card .val { font-size: 1.8rem; font-weight: 700; color: var(--accent2); margin: 4px 0; }
-  .kpi-card .sub { font-size: 0.78rem; color: var(--sub); }
-
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-  .chart-card { background: var(--card); border-radius: 10px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); }
-  .chart-card h3 { font-size: 0.85rem; color: var(--sub); font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .4px; }
-  .chart-full { grid-column: 1 / -1; }
-  canvas { max-height: 240px; }
-
-  .table-wrap { background: var(--card); border-radius: 10px; border: 1px solid var(--border); overflow: auto; box-shadow: var(--shadow); }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th { padding: 10px 14px; background: #faf8f4; border-bottom: 2px solid var(--border); text-align: left; font-size: 0.78rem; color: var(--sub); text-transform: uppercase; letter-spacing: .4px; cursor: pointer; user-select: none; white-space: nowrap; }
-  th:hover { color: var(--accent2); }
-  td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fdfaf5; }
-
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
-  .badge.green { background: var(--green-bg); color: var(--green); }
-  .badge.red { background: var(--red-bg); color: var(--red); }
-  .badge.blue { background: var(--blue-bg); color: var(--blue); }
-
-  /* Modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--card); border-radius: 14px; padding: 24px; max-width: 640px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto; }
-  .modal h2 { font-size: 1.1rem; color: var(--accent2); margin-bottom: 16px; }
-  .modal .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
-  .btn { padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; transition: all .15s; }
-  .btn-confirm { background: var(--green); color: white; }
-  .btn-cancel { background: var(--border); color: var(--text); }
-  .btn-add-row { background: var(--accent); color: white; font-size: 0.8rem; padding: 6px 14px; }
-  .btn-confirm:hover { background: #2d7a55; }
-
-  /* Edit form inside modal */
-  .edit-header { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .edit-field { display: flex; flex-direction: column; gap: 4px; }
-  .edit-field label { font-size: 0.75rem; color: var(--sub); font-weight: 600; text-transform: uppercase; }
-  .edit-field input { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; background: var(--bg); width: 100%; }
-  .edit-field input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
-
-  .edit-table-wrap { overflow-x: auto; margin-bottom: 8px; }
-  .edit-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-  .edit-table th { padding: 7px 8px; background: #faf8f4; border-bottom: 2px solid var(--border); text-align: left; font-size: 0.75rem; color: var(--sub); text-transform: uppercase; white-space: nowrap; }
-  .edit-table td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
-  .edit-table input { border: 1px solid var(--border); border-radius: 4px; padding: 4px 7px; font-size: 0.83rem; background: var(--bg); width: 100%; min-width: 70px; }
-  .edit-table input:focus { outline: 2px solid var(--accent); }
-  .edit-table .del-row-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: 1rem; padding: 2px 6px; opacity: 0.7; }
-  .edit-table .del-row-btn:hover { opacity: 1; }
-
-  .loading { display: none; text-align: center; padding: 20px; color: var(--sub); }
-  .loading.show { display: block; }
-  .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 8px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px 16px; background: var(--card); border-radius: 10px; border: 1px solid var(--border); }
-  .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .toolbar-label { font-size: 0.8rem; color: var(--sub); font-weight: 600; }
-  .btn-upload-csv { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue); cursor: pointer; }
-  .btn-template { background: var(--bg); color: var(--sub); border: 1px solid var(--border); }
-  .btn-export { background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
-  .btn-template:hover { background: var(--border); }
-  .btn-upload-csv:hover { background: #d0e8f8; }
-  .btn-export:hover { background: #d0f0e0; }
-  .import-result { font-size: 0.82rem; padding: 8px 12px; border-radius: 6px; margin-top: 8px; }
-  .import-result.ok { background: var(--green-bg); color: var(--green); }
-  .import-result.err { background: var(--red-bg); color: var(--red); }
-  .empty { text-align: center; padding: 40px; color: var(--sub); font-size: 0.9rem; }
-  .section-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 12px; margin-top: 4px; }
-  .hist-row td:first-child { font-weight: 600; }
-  .action-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; opacity: 0.7; padding: 2px 4px; }
-  .action-btn:hover { opacity: 1; }
-  .action-btn.edit { color: var(--blue); }
-  .action-btn.del { color: var(--red); }
-
-  @media (max-width: 600px) {
-    .chart-grid { grid-template-columns: 1fr; }
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .main { padding: 12px; }
-    .edit-header { grid-template-columns: 1fr 1fr; }
-  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{background:var(--card);border-bottom:2px solid var(--accent);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);flex-wrap:wrap;gap:10px;}
+  header h1{font-size:1.25rem;font-weight:700;color:var(--accent2);}
+  .key-wrap{display:flex;align-items:center;gap:8px;}
+  .key-wrap input{border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:.8rem;width:220px;background:var(--bg);color:var(--text);}
+  .key-wrap button{padding:5px 12px;border-radius:6px;border:none;background:var(--accent2);color:#fff;font-size:.78rem;cursor:pointer;font-weight:600;}
+  .key-status{font-size:.75rem;}
+  .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto;}
+  .tab{padding:14px 20px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--sub);border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+  .tab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+  .tab:hover:not(.active){color:var(--text);}
+  .main{padding:20px 24px;max-width:1200px;margin:0 auto;}
+  .pane{display:none;}.pane.active{display:block;}
+  .upload-zone{border:2px dashed var(--accent);border-radius:12px;padding:32px;text-align:center;background:#fdfaf5;cursor:pointer;transition:all .2s;margin-bottom:16px;}
+  .upload-zone:hover,.upload-zone.dragover{background:#fdf3e0;border-color:var(--accent2);}
+  .upload-zone p{color:var(--sub);font-size:.9rem;margin-top:8px;}
+  .upload-zone .icon{font-size:2.5rem;}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px;padding:12px 16px;background:var(--card);border-radius:10px;border:1px solid var(--border);}
+  .toolbar-left,.toolbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .toolbar-label{font-size:.8rem;color:var(--sub);font-weight:600;}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px;padding:14px 16px;background:var(--card);border-radius:10px;border:1px solid var(--border);}
+  .filters label{font-size:.8rem;color:var(--sub);font-weight:600;}
+  .filters input[type=date]{border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:.85rem;background:var(--bg);}
+  .chip{padding:4px 12px;border-radius:20px;border:1px solid var(--border);font-size:.78rem;cursor:pointer;background:var(--bg);transition:all .15s;white-space:nowrap;}
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .chips-wrap{display:flex;flex-wrap:wrap;gap:6px;flex:1;}
+  .btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .15s;}
+  .btn-all{padding:5px 14px;border-radius:20px;border:none;background:var(--accent2);color:#fff;font-size:.8rem;cursor:pointer;font-weight:600;}
+  .btn-confirm{background:var(--green);color:#fff;}.btn-confirm:hover{background:#2d7a55;}
+  .btn-cancel{background:var(--border);color:var(--text);}
+  .btn-add-row{background:var(--accent);color:#fff;font-size:.8rem;padding:6px 14px;}
+  .btn-upload-csv{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue) !important;cursor:pointer;}
+  .btn-template{background:var(--bg);color:var(--sub);border:1px solid var(--border);}
+  .btn-export{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+  .kpi-card{background:var(--card);border-radius:10px;padding:16px;border:1px solid var(--border);box-shadow:var(--shadow);}
+  .kpi-card .label{font-size:.75rem;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+  .kpi-card .val{font-size:1.8rem;font-weight:700;color:var(--accent2);margin:4px 0;}
+  .kpi-card .sub{font-size:.78rem;color:var(--sub);}
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+  .chart-card{background:var(--card);border-radius:10px;padding:16px;border:1px solid var(--border);box-shadow:var(--shadow);}
+  .chart-card h3{font-size:.85rem;color:var(--sub);font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:.4px;}
+  .chart-full{grid-column:1/-1;}
+  canvas{max-height:240px;}
+  .table-wrap{background:var(--card);border-radius:10px;border:1px solid var(--border);overflow:auto;box-shadow:var(--shadow);}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;}
+  th{padding:10px 14px;background:#faf8f4;border-bottom:2px solid var(--border);text-align:left;font-size:.78rem;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none;white-space:nowrap;}
+  th:hover{color:var(--accent2);}
+  td{padding:9px 14px;border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#fdfaf5;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;}
+  .badge.green{background:var(--green-bg);color:var(--green);}
+  .badge.red{background:var(--red-bg);color:var(--red);}
+  .badge.blue{background:var(--blue-bg);color:var(--blue);}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--card);border-radius:14px;padding:24px;max-width:680px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+  .modal h2{font-size:1.1rem;color:var(--accent2);margin-bottom:16px;}
+  .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+  .edit-header{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+  .edit-field{display:flex;flex-direction:column;gap:4px;}
+  .edit-field label{font-size:.75rem;color:var(--sub);font-weight:600;text-transform:uppercase;}
+  .edit-field input{border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.85rem;background:var(--bg);width:100%;}
+  .edit-field input:focus{outline:2px solid var(--accent);}
+  .edit-table-wrap{overflow-x:auto;margin-bottom:8px;}
+  .edit-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+  .edit-table th{padding:7px 8px;background:#faf8f4;border-bottom:2px solid var(--border);text-align:left;font-size:.75rem;color:var(--sub);text-transform:uppercase;}
+  .edit-table td{padding:5px 4px;border-bottom:1px solid var(--border);}
+  .edit-table input{border:1px solid var(--border);border-radius:4px;padding:4px 7px;font-size:.83rem;background:var(--bg);width:100%;min-width:70px;}
+  .edit-table input:focus{outline:2px solid var(--accent);}
+  .del-row-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:2px 6px;opacity:.7;}
+  .del-row-btn:hover{opacity:1;}
+  .loading{display:none;text-align:center;padding:20px;color:var(--sub);}
+  .loading.show{display:block;}
+  .spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .empty{text-align:center;padding:40px;color:var(--sub);font-size:.9rem;}
+  .section-title{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:12px;margin-top:4px;}
+  .action-btn{background:none;border:none;cursor:pointer;font-size:.85rem;opacity:.7;padding:2px 4px;}
+  .action-btn:hover{opacity:1;}
+  .action-btn.edit{color:var(--blue);}
+  .action-btn.del{color:var(--red);}
+  /* Config tab */
+  .config-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .config-card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:18px;box-shadow:var(--shadow);}
+  .config-card h3{font-size:.9rem;font-weight:700;color:var(--accent2);margin-bottom:4px;}
+  .config-card p{font-size:.78rem;color:var(--sub);margin-bottom:12px;}
+  .alias-table{width:100%;border-collapse:collapse;font-size:.83rem;margin-bottom:10px;}
+  .alias-table th{padding:6px 8px;background:#faf8f4;border-bottom:2px solid var(--border);text-align:left;font-size:.75rem;color:var(--sub);text-transform:uppercase;}
+  .alias-table td{padding:4px 4px;border-bottom:1px solid var(--border);}
+  .alias-table input{border:1px solid var(--border);border-radius:4px;padding:3px 7px;font-size:.82rem;background:var(--bg);width:100%;}
+  .alias-table input:focus{outline:2px solid var(--accent);}
+  .btn-add-alias{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:.8rem;cursor:pointer;font-weight:600;margin-right:6px;}
+  .btn-save-alias{background:var(--green);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:.8rem;cursor:pointer;font-weight:600;}
+  .save-ok{font-size:.78rem;color:var(--green);margin-left:8px;opacity:0;transition:opacity .3s;}
+  .save-ok.show{opacity:1;}
+  @media(max-width:700px){.chart-grid{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.main{padding:12px;}.edit-header{grid-template-columns:1fr 1fr;}.config-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
-
 <header>
   <h1>📦 Dashboard Reparto</h1>
   <div class="key-wrap">
@@ -147,6 +128,7 @@
   <div class="tab" data-tab="repartidores">Repartidores</div>
   <div class="tab" data-tab="zonas">Zonas</div>
   <div class="tab" data-tab="historial">Historial</div>
+  <div class="tab" data-tab="config">⚙ Configuración</div>
 </div>
 
 <div class="main">
@@ -160,18 +142,16 @@
 
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="toolbar-label">Carga masiva CSV:</span>
-      <label class="btn btn-upload-csv">
-        📂 Importar CSV
-        <input type="file" id="csv-input" accept=".csv" style="display:none">
-      </label>
-      <button class="btn btn-template" onclick="downloadTemplate()">📄 Descargar plantilla</button>
+      <span class="toolbar-label">Carga masiva:</span>
+      <label class="btn btn-upload-csv">📂 Importar CSV<input type="file" id="csv-input" accept=".csv" style="display:none"></label>
+      <button class="btn btn-template" onclick="downloadTemplate()">📄 Plantilla</button>
     </div>
     <div class="toolbar-right">
-      <button class="btn btn-export" onclick="exportCSV()">⬇️ Exportar Excel/CSV</button>
+      <button class="btn btn-export" onclick="exportCSV()">⬇️ Exportar CSV/Excel</button>
     </div>
   </div>
 
+  <!-- RESUMEN -->
   <div class="pane active" id="pane-resumen">
     <div class="filters">
       <label>Desde:</label><input type="date" id="r-desde">
@@ -185,6 +165,7 @@
     </div>
   </div>
 
+  <!-- REPARTIDORES -->
   <div class="pane" id="pane-repartidores">
     <div class="filters">
       <label>Desde:</label><input type="date" id="rep-desde">
@@ -199,6 +180,7 @@
     <div class="table-wrap"><table id="tbl-rep"><thead></thead><tbody></tbody></table></div>
   </div>
 
+  <!-- ZONAS -->
   <div class="pane" id="pane-zonas">
     <div class="filters">
       <label>Desde:</label><input type="date" id="z-desde">
@@ -215,48 +197,57 @@
     </div>
   </div>
 
+  <!-- HISTORIAL -->
   <div class="pane" id="pane-historial">
     <div class="section-title">Todos los registros</div>
     <div class="table-wrap"><table id="tbl-hist"><thead></thead><tbody></tbody></table></div>
   </div>
+
+  <!-- CONFIG -->
+  <div class="pane" id="pane-config">
+    <div class="config-grid">
+      <div class="config-card">
+        <h3>👤 Alias de repartidores</h3>
+        <p>Variante escrita → nombre canónico. La comparación ignora tildes y mayúsculas.</p>
+        <div class="table-wrap" style="box-shadow:none;border:none;margin-bottom:8px;max-height:380px;overflow-y:auto;">
+          <table class="alias-table"><thead><tr><th>Variante (como aparece)</th><th>Nombre canónico</th><th></th></tr></thead>
+          <tbody id="alias-rep-body"></tbody></table>
+        </div>
+        <button class="btn-add-alias" onclick="addAliasRow('rep')">+ Agregar</button>
+        <button class="btn-save-alias" onclick="saveAliases('rep')">💾 Guardar</button>
+        <span class="save-ok" id="save-ok-rep">✓ Guardado</span>
+      </div>
+      <div class="config-card">
+        <h3>📍 Alias de zonas</h3>
+        <p>Código o variante → nombre canónico de la zona.</p>
+        <div class="table-wrap" style="box-shadow:none;border:none;margin-bottom:8px;max-height:380px;overflow-y:auto;">
+          <table class="alias-table"><thead><tr><th>Variante (código/texto)</th><th>Nombre canónico</th><th></th></tr></thead>
+          <tbody id="alias-zona-body"></tbody></table>
+        </div>
+        <button class="btn-add-alias" onclick="addAliasRow('zona')">+ Agregar</button>
+        <button class="btn-save-alias" onclick="saveAliases('zona')">💾 Guardar</button>
+        <span class="save-ok" id="save-ok-zona">✓ Guardado</span>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Modal edición/confirmación -->
+<!-- Modal edición -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h2 id="modal-title">📋 Confirmar y editar datos</h2>
-
     <div class="edit-header">
-      <div class="edit-field">
-        <label>Fecha</label>
-        <input type="date" id="ed-fecha">
-      </div>
-      <div class="edit-field">
-        <label>Total Bultos</label>
-        <input type="number" id="ed-bultos" min="0">
-      </div>
-      <div class="edit-field">
-        <label>Total Clientes</label>
-        <input type="number" id="ed-clientes" min="0">
-      </div>
+      <div class="edit-field"><label>Fecha</label><input type="date" id="ed-fecha"></div>
+      <div class="edit-field"><label>Total Bultos</label><input type="number" id="ed-bultos" min="0"></div>
+      <div class="edit-field"><label>Total Clientes</label><input type="number" id="ed-clientes" min="0"></div>
     </div>
-
     <div class="edit-table-wrap">
       <table class="edit-table">
-        <thead>
-          <tr>
-            <th>Repartidor</th>
-            <th>Clientes</th>
-            <th>Bultos</th>
-            <th>Zona</th>
-            <th></th>
-          </tr>
-        </thead>
+        <thead><tr><th>Repartidor</th><th>Clientes</th><th>Bultos</th><th>Zona</th><th></th></tr></thead>
         <tbody id="ed-rows"></tbody>
       </table>
     </div>
     <button class="btn btn-add-row" onclick="addEditRow()">+ Agregar fila</button>
-
     <div class="actions">
       <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-confirm" onclick="confirmData()">✓ Guardar</button>
@@ -265,7 +256,42 @@
 </div>
 
 <script>
-// ── API Key ────────────────────────────────────────────────────────────────
+// ── Defaults ───────────────────────────────────────────────────────────────
+const DEFAULT_REP_ALIASES = [
+  ['cristian obyszuk','Cristian Obyszuk'],['c obyszuk','Cristian Obyszuk'],['obyszuk','Cristian Obyszuk'],
+  ['orlando zylka','Orlando Zylka'],['zylka','Orlando Zylka'],['o zylka','Orlando Zylka'],
+  ['jose luis cantero','José Luis Cantero'],['josé luis cantero','José Luis Cantero'],['cantero','José Luis Cantero'],['j cantero','José Luis Cantero'],
+  ['sebastian funes','Sebastián Funes'],['sebastián funes','Sebastián Funes'],['funes','Sebastián Funes'],['s funes','Sebastián Funes'],
+  ['ruben gandulla','Rubén Gandulla'],['rubén gandulla','Rubén Gandulla'],['gandulla','Rubén Gandulla'],['r gandulla','Rubén Gandulla'],
+  ['diego koubas','Diego Koubas'],['koubas','Diego Koubas'],['d koubas','Diego Koubas'],
+  ['hugo kursawe','Hugo Kursawe'],['kursawe','Hugo Kursawe'],['h kursawe','Hugo Kursawe'],
+  ['ulises quevedo','Ulises Quevedo'],['quevedo','Ulises Quevedo'],['u quevedo','Ulises Quevedo'],
+  ['fabian ramirez','Fabián Ramírez'],['fabián ramírez','Fabián Ramírez'],['ramirez','Fabián Ramírez'],['f ramirez','Fabián Ramírez'],
+  ['hector rodriguez','Héctor Rodríguez'],['héctor rodríguez','Héctor Rodríguez'],['rodriguez','Héctor Rodríguez'],['h rodriguez','Héctor Rodríguez'],
+  ['anibal serrano','Aníbal Serrano'],['aníbal serrano','Aníbal Serrano'],['serrano','Aníbal Serrano'],['a serrano','Aníbal Serrano'],
+  ['hugo strelau','Hugo Strelau'],['strelau','Hugo Strelau'],['h strelau','Hugo Strelau'],
+  ['omar avinagalde','Omar Avinagalde'],['avinagalde','Omar Avinagalde'],['o avinagalde','Omar Avinagalde'],
+  ['alejandro rivero','Alejandro Rivero'],['rivero','Alejandro Rivero'],['a rivero','Alejandro Rivero'],
+];
+const DEFAULT_ZONA_ALIASES = [
+  ['25m','25 de Mayo'],['25 de mayo','25 de Mayo'],
+  ['2my','2 de Mayo'],['2 de mayo','2 de Mayo'],
+  ['ale','Alem'],['alem','Alem'],
+  ['ali','Colonia Alicia'],['colonia alicia','Colonia Alicia'],
+  ['and','Andrade'],['andrade','Andrade'],
+  ['aps','Alba Posse'],['alba posse','Alba Posse'],
+  ['ari','Aristóbulo del Valle'],['aristobulo del valle','Aristóbulo del Valle'],['aristóbulo del valle','Aristóbulo del Valle'],
+  ['pan','Panambí'],['panambi','Panambí'],['panambí','Panambí'],
+  ['sen','Salto Encantado'],['salto encantado','Salto Encantado'],
+  ['sfc','San Francisco'],['san francisco','San Francisco'],
+  ['smt','San Martín'],['san martin','San Martín'],['san martín','San Martín'],
+  ['sob','El Soberbio'],['el soberbio','El Soberbio'],
+  ['srt','Santa Rita'],['santa rita','Santa Rita'],
+  ['svt','San Vicente'],['san vicente','San Vicente'],
+  ['vbo','Villa Bonita'],['villa bonita','Villa Bonita'],
+];
+
+// ── Storage ────────────────────────────────────────────────────────────────
 function saveKey() {
   const val = document.getElementById('api-key-input').value.trim();
   if (!val.startsWith('sk-')) { alert('La key debe empezar con "sk-"'); return; }
@@ -275,35 +301,98 @@ function saveKey() {
 }
 function getKey() { return localStorage.getItem('anthropic_key') || ''; }
 function updateKeyStatus() {
-  const k = getKey();
-  const el = document.getElementById('key-status');
-  if (k) { el.textContent = '✓ Key guardada'; el.style.color = 'var(--green)'; }
-  else { el.textContent = '⚠ Sin key'; el.style.color = 'var(--red)'; }
+  const k = getKey(), el = document.getElementById('key-status');
+  el.textContent = k ? '✓ Key guardada' : '⚠ Sin key';
+  el.style.color = k ? 'var(--green)' : 'var(--red)';
 }
 
-// ── State ──────────────────────────────────────────────────────────────────
 let records = JSON.parse(localStorage.getItem('reparto_v2') || '[]');
-let editingIndex = null; // null = nuevo registro, número = editar existente
-let charts = {};
-let sortState = {};
-let activeFilters = { resumen: null, rep: null, zona: null };
-
 function save() { localStorage.setItem('reparto_v2', JSON.stringify(records)); }
 
+// ── Alias system ───────────────────────────────────────────────────────────
+function loadAliases(type) {
+  const def = type === 'rep' ? DEFAULT_REP_ALIASES : DEFAULT_ZONA_ALIASES;
+  const stored = localStorage.getItem('aliases_' + type);
+  return stored ? JSON.parse(stored) : def;
+}
+function saveAliasData(type, data) { localStorage.setItem('aliases_' + type, JSON.stringify(data)); }
+
+function normalize(str) {
+  return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+function resolveAlias(type, val) {
+  const aliases = loadAliases(type);
+  const n = normalize(val);
+  for (const [variant, canonical] of aliases) {
+    if (normalize(variant) === n) return canonical;
+  }
+  return val; // sin match → devolver original
+}
+function normalizeRecord(rec) {
+  if (!rec.filas) return rec;
+  rec.filas = rec.filas.map(f => ({
+    ...f,
+    rep: resolveAlias('rep', f.rep),
+    zona: resolveAlias('zona', f.zona)
+  }));
+  return rec;
+}
+
+// ── Config tab ─────────────────────────────────────────────────────────────
+function renderAliasTable(type) {
+  const data = loadAliases(type);
+  const tbody = document.getElementById('alias-' + type + '-body');
+  tbody.innerHTML = data.map((row, i) => `
+    <tr>
+      <td><input value="${esc(row[0])}" onchange="updateAlias('${type}',${i},0,this.value)"></td>
+      <td><input value="${esc(row[1])}" onchange="updateAlias('${type}',${i},1,this.value)"></td>
+      <td><button class="del-row-btn" onclick="removeAlias('${type}',${i})">✕</button></td>
+    </tr>`).join('');
+}
+function esc(s) { return String(s||'').replace(/"/g,'&quot;'); }
+
+let _aliasEdit = { rep: null, zona: null };
+function ensureAliasEdit(type) { if (!_aliasEdit[type]) _aliasEdit[type] = loadAliases(type).map(r=>[...r]); }
+function updateAlias(type, i, col, val) { ensureAliasEdit(type); _aliasEdit[type][i][col] = val; }
+function removeAlias(type, i) {
+  ensureAliasEdit(type);
+  _aliasEdit[type].splice(i, 1);
+  saveAliasData(type, _aliasEdit[type]);
+  renderAliasTable(type);
+}
+function addAliasRow(type) {
+  ensureAliasEdit(type);
+  _aliasEdit[type].push(['','']);
+  saveAliasData(type, _aliasEdit[type]);
+  renderAliasTable(type);
+}
+function saveAliases(type) {
+  ensureAliasEdit(type);
+  saveAliasData(type, _aliasEdit[type]);
+  _aliasEdit[type] = null;
+  renderAliasTable(type);
+  const ok = document.getElementById('save-ok-' + type);
+  ok.classList.add('show');
+  setTimeout(() => ok.classList.remove('show'), 2000);
+}
+
 // ── Tabs ───────────────────────────────────────────────────────────────────
+let charts = {}, sortState = {}, editingIndex = null;
+let activeFilters = { resumen: null, rep: null, zona: null };
+
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('pane-' + t.dataset.tab).classList.add('active');
-    refreshAll();
+    if (t.dataset.tab === 'config') { renderAliasTable('rep'); renderAliasTable('zona'); }
+    else refreshAll();
   });
 });
 
 // ── Upload ─────────────────────────────────────────────────────────────────
-const uz = document.getElementById('upload-zone');
-const fi = document.getElementById('file-input');
+const uz = document.getElementById('upload-zone'), fi = document.getElementById('file-input');
 uz.addEventListener('click', () => fi.click());
 fi.addEventListener('change', e => e.target.files[0] && processImage(e.target.files[0]));
 uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('dragover'); });
@@ -312,399 +401,281 @@ uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('drag
 
 async function processImage(file) {
   const key = getKey();
-  if (!key) { alert('Primero guardá tu API key de Anthropic en el campo del encabezado.'); return; }
+  if (!key) { alert('Primero guardá tu API key.'); return; }
   document.getElementById('loading').classList.add('show');
   try {
     const b64 = await toBase64(file);
-    const mediaType = file.type || 'image/jpeg';
-    const prompt = `Sos un extractor de datos preciso. Analizá esta imagen de un "Informe Diario de Reparto" y devolvé ÚNICAMENTE un objeto JSON válido, sin texto adicional, sin backticks, sin markdown.
-
-El JSON debe tener exactamente esta estructura:
-{
-  "fecha": "YYYY-MM-DD",
-  "total_clientes": número,
-  "total_bultos": número,
-  "filas": [
-    {"rep": "nombre", "clientes": número, "bultos": número, "zona": "ZONA_SIN_LETRA"}
-  ]
-}
-
-REGLA CRÍTICA para zonas: cada zona tiene una letra inicial de orden de carga (ej: "A SVT", "B SOB", "C OBR"). Debés eliminar esa letra inicial y el espacio — la zona real es solo lo que viene después (ej: "SVT", "SOB", "OBR"). Si no hay letra de orden, dejá la zona como está.
-
-Si no podés leer algún dato, usá null para ese campo.`;
-
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
-            { type: 'text', text: prompt }
-          ]
-        }]
+        model: 'claude-haiku-4-5', max_tokens: 1000,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: file.type||'image/jpeg', data: b64 } },
+          { type: 'text', text: `Extraé los datos del informe y devolvé SOLO JSON sin backticks:\n{"fecha":"YYYY-MM-DD","total_clientes":N,"total_bultos":N,"filas":[{"rep":"nombre","clientes":N,"bultos":N,"zona":"ZONA"}]}\nREGLA ZONAS: eliminá la letra inicial de orden (ej "A SVT"→"SVT"). Si no hay letra dejala igual.` }
+        ]}]
       })
     });
     const data = await resp.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-    const txt = (data.content || []).map(c => c.text || '').join('').trim();
-    if (!txt) throw new Error('Respuesta vacía. Raw: ' + JSON.stringify(data).slice(0,400));
-    const clean = txt.replace(/```json|```/g, '').trim();
+    if (data.error) throw new Error(data.error.message);
+    const txt = (data.content||[]).map(c=>c.text||'').join('').trim();
+    const clean = txt.replace(/```json|```/g,'').trim();
     let parsed;
-    try { parsed = JSON.parse(clean); } catch(e) { throw new Error('JSON inválido: ' + clean.slice(0,300)); }
-    if (!parsed.filas && parsed.rows) parsed.filas = parsed.rows;
-    if (!parsed.filas && Array.isArray(parsed)) parsed = { filas: parsed };
+    try { parsed = JSON.parse(clean); } catch(e) { throw new Error('JSON inválido: ' + clean.slice(0,200)); }
     if (!parsed.filas) parsed.filas = [];
     parsed.filas = parsed.filas.map(f => ({
-      rep: f.rep || f.repartidor || f.nombre || '',
-      clientes: Number(f.clientes || f.cli || f.q_clientes || 0),
-      bultos: Number(f.bultos || f.bul || f.q_bultos || 0),
-      zona: f.zona || f.zone || ''
+      rep: f.rep||f.repartidor||'', clientes: Number(f.clientes||0), bultos: Number(f.bultos||0), zona: f.zona||''
     }));
+    parsed = normalizeRecord(parsed);
     editingIndex = null;
     openModal(parsed, '📋 Confirmar y editar datos extraídos');
-  } catch(err) {
-    alert('Error al procesar la imagen: ' + err.message);
-  } finally {
-    document.getElementById('loading').classList.remove('show');
-    fi.value = '';
-  }
+  } catch(err) { alert('Error: ' + err.message); }
+  finally { document.getElementById('loading').classList.remove('show'); fi.value = ''; }
 }
-
 function toBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
+  return new Promise((res,rej) => { const r = new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
 }
 
-// ── Modal edición ──────────────────────────────────────────────────────────
+// ── Modal ──────────────────────────────────────────────────────────────────
 function openModal(d, title) {
-  document.getElementById('modal-title').textContent = title || '📋 Editar registro';
-  document.getElementById('ed-fecha').value = d.fecha || '';
-  document.getElementById('ed-bultos').value = d.total_bultos || '';
-  document.getElementById('ed-clientes').value = d.total_clientes || '';
-  renderEditRows(d.filas || []);
+  document.getElementById('modal-title').textContent = title||'📋 Editar';
+  document.getElementById('ed-fecha').value = d.fecha||'';
+  document.getElementById('ed-bultos').value = d.total_bultos||'';
+  document.getElementById('ed-clientes').value = d.total_clientes||'';
+  renderEditRows(d.filas||[]);
   document.getElementById('modal').classList.add('open');
 }
-
 function renderEditRows(filas) {
-  const tbody = document.getElementById('ed-rows');
-  tbody.innerHTML = filas.map((f, i) => `
+  window._editFilas = filas.map(f=>({...f}));
+  document.getElementById('ed-rows').innerHTML = filas.map((f,i) => `
     <tr>
-      <td><input value="${f.rep||''}" oninput="updateRow(${i},'rep',this.value)"></td>
+      <td><input value="${esc(f.rep)}" oninput="updateRow(${i},'rep',this.value)"></td>
       <td><input type="number" value="${f.clientes||0}" min="0" oninput="updateRow(${i},'clientes',this.value)"></td>
       <td><input type="number" value="${f.bultos||0}" min="0" oninput="updateRow(${i},'bultos',this.value)"></td>
-      <td><input value="${f.zona||''}" oninput="updateRow(${i},'zona',this.value)"></td>
+      <td><input value="${esc(f.zona)}" oninput="updateRow(${i},'zona',this.value)"></td>
       <td><button class="del-row-btn" onclick="removeEditRow(${i})">✕</button></td>
-    </tr>
-  `).join('');
-  // guardar referencia de filas en memoria temporal
-  window._editFilas = filas.map(f => ({...f}));
+    </tr>`).join('');
 }
-
-function updateRow(i, field, val) {
-  if (!window._editFilas) return;
-  window._editFilas[i][field] = (field === 'clientes' || field === 'bultos') ? Number(val) : val;
-}
-
-function removeEditRow(i) {
-  window._editFilas.splice(i, 1);
-  renderEditRows(window._editFilas);
-}
-
-function addEditRow() {
-  if (!window._editFilas) window._editFilas = [];
-  window._editFilas.push({ rep: '', clientes: 0, bultos: 0, zona: '' });
-  renderEditRows(window._editFilas);
-}
-
+function updateRow(i,field,val) { if(window._editFilas) window._editFilas[i][field]=(field==='clientes'||field==='bultos')?Number(val):val; }
+function removeEditRow(i) { window._editFilas.splice(i,1); renderEditRows(window._editFilas); }
+function addEditRow() { if(!window._editFilas) window._editFilas=[]; window._editFilas.push({rep:'',clientes:0,bultos:0,zona:''}); renderEditRows(window._editFilas); }
 function getModalData() {
-  return {
-    fecha: document.getElementById('ed-fecha').value,
-    total_bultos: Number(document.getElementById('ed-bultos').value) || 0,
-    total_clientes: Number(document.getElementById('ed-clientes').value) || 0,
-    filas: (window._editFilas || []).filter(f => f.rep)
-  };
+  return { fecha:document.getElementById('ed-fecha').value, total_bultos:Number(document.getElementById('ed-bultos').value)||0, total_clientes:Number(document.getElementById('ed-clientes').value)||0, filas:(window._editFilas||[]).filter(f=>f.rep) };
 }
-
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-  window._editFilas = [];
-  editingIndex = null;
-}
-
+function closeModal() { document.getElementById('modal').classList.remove('open'); window._editFilas=[]; editingIndex=null; }
 function confirmData() {
-  const d = getModalData();
+  let d = getModalData();
   if (!d.fecha) { alert('La fecha es obligatoria.'); return; }
-
+  d = normalizeRecord(d);
   if (editingIndex !== null) {
-    // editar existente
     records[editingIndex] = d;
   } else {
-    // nuevo registro
     const exists = records.findIndex(r => r.fecha === d.fecha);
-    if (exists >= 0) {
-      if (!confirm(`Ya existe un registro para ${d.fecha}. ¿Reemplazar?`)) return;
-      records.splice(exists, 1);
-    }
+    if (exists >= 0) { if (!confirm(`Ya existe registro para ${d.fecha}. ¿Reemplazar?`)) return; records.splice(exists,1); }
     records.push(d);
     records.sort((a,b) => a.fecha.localeCompare(b.fecha));
   }
-  save();
-  closeModal();
-  refreshAll();
-  updateLastUpdate();
+  save(); closeModal(); refreshAll(); updateLastUpdate();
 }
+function updateLastUpdate() { if(records.length) document.getElementById('last-update').textContent=`Último: ${records[records.length-1].fecha}`; }
 
-function updateLastUpdate() {
-  if (records.length) document.getElementById('last-update').textContent = `Último: ${records[records.length-1].fecha}`;
-}
-
-// ── Filter helpers ─────────────────────────────────────────────────────────
-function getDates() { return [...new Set(records.map(r => r.fecha))].sort(); }
-
-function buildChips(containerId, prefix, onChange) {
-  const dates = getDates();
-  const wrap = document.getElementById(containerId);
-  wrap.innerHTML = '';
-  dates.forEach(d => {
+// ── Filters ────────────────────────────────────────────────────────────────
+function getDates() { return [...new Set(records.map(r=>r.fecha))].sort(); }
+function buildChips(cid, prefix, onChange) {
+  const wrap = document.getElementById(cid); wrap.innerHTML='';
+  getDates().forEach(d => {
     const c = document.createElement('span');
-    c.className = 'chip' + (activeFilters[prefix] === d ? ' active' : '');
-    c.textContent = fmtDate(d);
-    c.onclick = () => {
-      activeFilters[prefix] = activeFilters[prefix] === d ? null : d;
-      buildChips(containerId, prefix, onChange);
-      onChange();
-    };
+    c.className='chip'+(activeFilters[prefix]===d?' active':'');
+    c.textContent=fmtDate(d);
+    c.onclick=()=>{ activeFilters[prefix]=activeFilters[prefix]===d?null:d; buildChips(cid,prefix,onChange); onChange(); };
     wrap.appendChild(c);
   });
 }
-
 function setAll(prefix) {
-  activeFilters[prefix] = null;
-  const map = { resumen: ['r-desde','r-hasta'], rep: ['rep-desde','rep-hasta'], zona: ['z-desde','z-hasta'] };
-  map[prefix].forEach(id => document.getElementById(id).value = '');
+  activeFilters[prefix]=null;
+  ({resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta']})[prefix].forEach(id=>document.getElementById(id).value='');
   refreshAll();
 }
-
 function filterRecords(prefix) {
-  if (activeFilters[prefix]) return records.filter(r => r.fecha === activeFilters[prefix]);
-  const map = { resumen: ['r-desde','r-hasta'], rep: ['rep-desde','rep-hasta'], zona: ['z-desde','z-hasta'] };
-  const [d1id, d2id] = map[prefix] || [];
-  const d1 = d1id ? document.getElementById(d1id)?.value : '';
-  const d2 = d2id ? document.getElementById(d2id)?.value : '';
-  return records.filter(r => (!d1 || r.fecha >= d1) && (!d2 || r.fecha <= d2));
+  if (activeFilters[prefix]) return records.filter(r=>r.fecha===activeFilters[prefix]);
+  const [d1id,d2id]=({resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta']})[prefix];
+  const d1=document.getElementById(d1id)?.value||'', d2=document.getElementById(d2id)?.value||'';
+  return records.filter(r=>(!d1||r.fecha>=d1)&&(!d2||r.fecha<=d2));
 }
+function fmtDate(d) { const [y,m,day]=d.split('-'); return `${day}/${m}/${y.slice(2)}`; }
 
-function fmtDate(d) {
-  const [y,m,day] = d.split('-');
-  return `${day}/${m}/${y.slice(2)}`;
-}
-
-// ── Refresh all ────────────────────────────────────────────────────────────
+// ── Refresh ────────────────────────────────────────────────────────────────
 function refreshAll() {
   updateLastUpdate();
-  buildChips('chips-resumen', 'resumen', refreshResumen);
-  buildChips('chips-rep', 'rep', refreshRep);
-  buildChips('chips-zona', 'zona', refreshZona);
-  document.getElementById('r-desde').onchange = refreshResumen;
-  document.getElementById('r-hasta').onchange = refreshResumen;
-  document.getElementById('rep-desde').onchange = refreshRep;
-  document.getElementById('rep-hasta').onchange = refreshRep;
-  document.getElementById('z-desde').onchange = refreshZona;
-  document.getElementById('z-hasta').onchange = refreshZona;
+  buildChips('chips-resumen','resumen',refreshResumen);
+  buildChips('chips-rep','rep',refreshRep);
+  buildChips('chips-zona','zona',refreshZona);
+  document.getElementById('r-desde').onchange=refreshResumen;
+  document.getElementById('r-hasta').onchange=refreshResumen;
+  document.getElementById('rep-desde').onchange=refreshRep;
+  document.getElementById('rep-hasta').onchange=refreshRep;
+  document.getElementById('z-desde').onchange=refreshZona;
+  document.getElementById('z-hasta').onchange=refreshZona;
   refreshResumen(); refreshRep(); refreshZona(); refreshHistorial();
 }
 
-// ── RESUMEN ────────────────────────────────────────────────────────────────
+// ── Resumen ────────────────────────────────────────────────────────────────
 function refreshResumen() {
-  const data = filterRecords('resumen');
-  if (!data.length) { document.getElementById('kpi-resumen').innerHTML = '<div class="empty">Sin datos para el período seleccionado</div>'; destroyChart('chart-evol'); return; }
-  const bultos = data.map(r => r.total_bultos || 0);
-  const clientes = data.map(r => r.total_clientes || 0);
-  const avgB = avg(bultos), avgC = avg(clientes);
-  const totalB = sum(bultos), totalC = sum(clientes);
-  const ratioBC = totalC ? (totalB/totalC).toFixed(2) : '—';
-
-  const kpis = [
-    { label: 'Total Bultos', val: fmt(totalB), sub: `Prom: ${fmt(Math.round(avgB))} / día` },
-    { label: 'Total Clientes', val: fmt(totalC), sub: `Prom: ${fmt(Math.round(avgC))} / día` },
-    { label: 'Ratio B/C Global', val: ratioBC, sub: 'bultos por cliente' },
-    { label: 'Días registrados', val: data.length, sub: '' },
-    { label: 'Máx. Bultos/día', val: fmt(Math.max(...bultos)), sub: '' },
-    { label: 'Mín. Bultos/día', val: fmt(Math.min(...bultos)), sub: '' },
-    { label: 'Máx. Clientes/día', val: fmt(Math.max(...clientes)), sub: '' },
-    { label: 'Mín. Clientes/día', val: fmt(Math.min(...clientes)), sub: '' },
-  ];
-  document.getElementById('kpi-resumen').innerHTML = kpis.map(k =>
-    `<div class="kpi-card"><div class="label">${k.label}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`
-  ).join('');
-
+  const data=filterRecords('resumen');
+  if (!data.length) { document.getElementById('kpi-resumen').innerHTML='<div class="empty">Sin datos</div>'; destroyChart('chart-evol'); return; }
+  const bultos=data.map(r=>r.total_bultos||0), clientes=data.map(r=>r.total_clientes||0);
+  const totalB=sum(bultos),totalC=sum(clientes),avgB=avg(bultos),avgC=avg(clientes);
+  document.getElementById('kpi-resumen').innerHTML=[
+    {label:'Total Bultos',val:fmt(totalB),sub:`Prom: ${fmt(Math.round(avgB))} / día`},
+    {label:'Total Clientes',val:fmt(totalC),sub:`Prom: ${fmt(Math.round(avgC))} / día`},
+    {label:'Ratio B/C Global',val:totalC?(totalB/totalC).toFixed(2):'—',sub:'bultos por cliente'},
+    {label:'Días registrados',val:data.length,sub:''},
+    {label:'Máx. Bultos/día',val:fmt(Math.max(...bultos)),sub:''},
+    {label:'Mín. Bultos/día',val:fmt(Math.min(...bultos)),sub:''},
+    {label:'Máx. Clientes/día',val:fmt(Math.max(...clientes)),sub:''},
+    {label:'Mín. Clientes/día',val:fmt(Math.min(...clientes)),sub:''},
+  ].map(k=>`<div class="kpi-card"><div class="label">${k.label}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`).join('');
   destroyChart('chart-evol');
-  const ctx = document.getElementById('chart-evol').getContext('2d');
-  charts['chart-evol'] = new Chart(ctx, {
-    data: {
-      labels: data.map(r => fmtDate(r.fecha)),
-      datasets: [
-        { type:'bar', label:'Bultos', data: bultos, backgroundColor: 'rgba(200,169,110,0.7)', yAxisID:'y' },
-        { type:'line', label:'Clientes', data: clientes, borderColor: '#8b6f47', borderDash:[5,4], pointBackgroundColor:'#8b6f47', fill:false, tension:.3, yAxisID:'y2' }
-      ]
-    },
-    options: { responsive:true, maintainAspectRatio:true, plugins:{ legend:{ position:'top' } }, scales:{ y:{ position:'left', grid:{color:'#f0ece6'} }, y2:{ position:'right', grid:{drawOnChartArea:false} } } }
+  charts['chart-evol']=new Chart(document.getElementById('chart-evol').getContext('2d'),{
+    data:{labels:data.map(r=>fmtDate(r.fecha)),datasets:[
+      {type:'bar',label:'Bultos',data:bultos,backgroundColor:'rgba(200,169,110,0.7)',yAxisID:'y'},
+      {type:'line',label:'Clientes',data:clientes,borderColor:'#8b6f47',borderDash:[5,4],pointBackgroundColor:'#8b6f47',fill:false,tension:.3,yAxisID:'y2'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{y:{position:'left',grid:{color:'#f0ece6'}},y2:{position:'right',grid:{drawOnChartArea:false}}}}
   });
 }
 
-// ── REPARTIDORES ───────────────────────────────────────────────────────────
+// ── Repartidores ───────────────────────────────────────────────────────────
 function refreshRep() {
-  const data = filterRecords('rep');
-  if (!data.length) { document.getElementById('tbl-rep').querySelector('tbody').innerHTML = '<tr><td colspan="7" class="empty">Sin datos</td></tr>'; destroyChart('chart-rep'); return; }
-  const allRows = data.flatMap(r => r.filas || []);
-  const repMap = {};
-  allRows.forEach(row => {
-    const k = row.rep;
-    if (!repMap[k]) repMap[k] = { rep:k, bultos:0, clientes:0, dias:new Set() };
-    repMap[k].bultos += row.bultos || 0;
-    repMap[k].clientes += row.clientes || 0;
+  const data=filterRecords('rep');
+  if (!data.length) { document.getElementById('tbl-rep').querySelector('tbody').innerHTML='<tr><td colspan="6" class="empty">Sin datos</td></tr>'; destroyChart('chart-rep'); return; }
+  const repMap={};
+  data.flatMap(r=>r.filas||[]).forEach(row=>{
+    const k=row.rep; if(!repMap[k]) repMap[k]={rep:k,bultos:0,clientes:0,dias:new Set()};
+    repMap[k].bultos+=row.bultos||0; repMap[k].clientes+=row.clientes||0;
   });
-  data.forEach(r => { (r.filas||[]).forEach(f => { if(repMap[f.rep]) repMap[f.rep].dias.add(r.fecha); }); });
-  const reps = Object.values(repMap).map(r => ({
-    ...r, dias: r.dias.size,
-    bpd: r.dias.size ? (r.bultos/r.dias.size).toFixed(1) : 0,
-    ratioBC: r.clientes ? (r.bultos/r.clientes).toFixed(2) : 0
-  }));
-  const avgBultos = avg(reps.map(r => r.bultos));
-
+  data.forEach(r=>(r.filas||[]).forEach(f=>repMap[f.rep]&&repMap[f.rep].dias.add(r.fecha)));
+  const reps=Object.values(repMap).map(r=>({...r,dias:r.dias.size,bpd:r.dias.size?(r.bultos/r.dias.size).toFixed(1):0,ratioBC:r.clientes?(r.bultos/r.clientes).toFixed(2):0}));
+  const avgBultos=avg(reps.map(r=>r.bultos));
   destroyChart('chart-rep');
-  const ctx = document.getElementById('chart-rep').getContext('2d');
-  const sorted = [...reps].sort((a,b) => b.bultos-a.bultos);
-  charts['chart-rep'] = new Chart(ctx, {
-    type:'bar',
-    data: { labels: sorted.map(r=>r.rep), datasets:[{ label:'Bultos', data: sorted.map(r=>r.bultos), backgroundColor:'rgba(200,169,110,0.75)', borderColor:'#c8a96e', borderWidth:1 }] },
-    options: { indexAxis:'y', responsive:true, maintainAspectRatio:true, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'#f0ece6'}}} }
+  const s=[...reps].sort((a,b)=>b.bultos-a.bultos);
+  charts['chart-rep']=new Chart(document.getElementById('chart-rep').getContext('2d'),{
+    type:'bar',data:{labels:s.map(r=>r.rep),datasets:[{label:'Bultos',data:s.map(r=>r.bultos),backgroundColor:'rgba(200,169,110,0.75)',borderColor:'#c8a96e',borderWidth:1}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0ece6'}}}}
   });
-
   renderSortableTable('tbl-rep',
-    [ {key:'rep',label:'Repartidor'}, {key:'bultos',label:'Bultos Tot.'}, {key:'clientes',label:'Clientes Tot.'}, {key:'dias',label:'Días'}, {key:'bpd',label:'Bultos/Día'}, {key:'ratioBC',label:'B/C'}, {key:'vs',label:'vs Promedio'} ],
-    reps,
-    (row) => {
-      const pct = avgBultos ? ((row.bultos - avgBultos)/avgBultos*100) : 0;
-      const badge = pct >= 10 ? 'green' : pct <= -10 ? 'red' : 'blue';
-      const sign = pct > 0 ? '+' : '';
-      return { ...row, bultos: fmt(row.bultos), clientes: fmt(row.clientes), bpd: fmtD(row.bpd), vs: `<span class="badge ${badge}">${sign}${pct.toFixed(1)}%</span>` };
-    }
-  );
+    [{key:'rep',label:'Repartidor'},{key:'bultos',label:'Bultos Tot.'},{key:'clientes',label:'Clientes Tot.'},{key:'dias',label:'Días'},{key:'bpd',label:'Bultos/Día'},{key:'ratioBC',label:'B/C'},{key:'vs',label:'vs Promedio'}],
+    reps, row=>{
+      const pct=avgBultos?((row.bultos-avgBultos)/avgBultos*100):0;
+      const badge=pct>=10?'green':pct<=-10?'red':'blue';
+      return {...row,bultos:fmt(row.bultos),clientes:fmt(row.clientes),bpd:fmtD(row.bpd),vs:`<span class="badge ${badge}">${pct>0?'+':''}${pct.toFixed(1)}%</span>`};
+    });
 }
 
-// ── ZONAS ──────────────────────────────────────────────────────────────────
+// ── Zonas ──────────────────────────────────────────────────────────────────
 function refreshZona() {
-  const data = filterRecords('zona');
-  if (!data.length) { document.getElementById('tbl-zona').querySelector('tbody').innerHTML = '<tr><td colspan="5" class="empty">Sin datos</td></tr>'; destroyChart('chart-zona'); return; }
-  const allRows = data.flatMap(r => r.filas || []);
-  const zonaMap = {};
-  allRows.forEach(row => {
-    const z = row.zona || 'Sin zona';
-    if (!zonaMap[z]) zonaMap[z] = { zona:z, bultos:0, clientes:0 };
-    zonaMap[z].bultos += row.bultos || 0;
-    zonaMap[z].clientes += row.clientes || 0;
+  const data=filterRecords('zona');
+  if (!data.length) { document.getElementById('tbl-zona').querySelector('tbody').innerHTML='<tr><td colspan="5" class="empty">Sin datos</td></tr>'; destroyChart('chart-zona'); return; }
+  const zonaMap={};
+  data.flatMap(r=>r.filas||[]).forEach(row=>{
+    const z=row.zona||'Sin zona'; if(!zonaMap[z]) zonaMap[z]={zona:z,bultos:0,clientes:0};
+    zonaMap[z].bultos+=row.bultos||0; zonaMap[z].clientes+=row.clientes||0;
   });
-  const totalB = sum(Object.values(zonaMap).map(z=>z.bultos));
-  const zonas = Object.values(zonaMap).map(z => ({
-    ...z,
-    bultos_fmt: fmt(z.bultos), clientes_fmt: fmt(z.clientes),
-    pct: totalB ? (z.bultos/totalB*100).toFixed(1) + '%' : '0%',
-    ratioBC: z.clientes ? (z.bultos/z.clientes).toFixed(2) : 0
-  })).sort((a,b)=>b.bultos-a.bultos);
-
+  const totalB=sum(Object.values(zonaMap).map(z=>z.bultos));
+  const zonas=Object.values(zonaMap).map(z=>({...z,bultos_fmt:fmt(z.bultos),clientes_fmt:fmt(z.clientes),pct:totalB?(z.bultos/totalB*100).toFixed(1)+'%':'0%',ratioBC:z.clientes?(z.bultos/z.clientes).toFixed(2):0})).sort((a,b)=>b.bultos-a.bultos);
   destroyChart('chart-zona');
-  const colors = ['#c8a96e','#8b6f47','#e8c48e','#6b4f2a','#d4a96e','#a07850','#f0d4a0','#704030'];
-  const ctx = document.getElementById('chart-zona').getContext('2d');
-  charts['chart-zona'] = new Chart(ctx, {
-    type:'doughnut',
-    data: { labels: zonas.map(z=>z.zona), datasets:[{ data: zonas.map(z=>z.bultos), backgroundColor: colors.slice(0,zonas.length) }] },
-    options: { responsive:true, maintainAspectRatio:true, plugins:{ legend:{ position:'right', labels:{ font:{size:11} } } } }
+  const colors=['#c8a96e','#8b6f47','#e8c48e','#6b4f2a','#d4a96e','#a07850','#f0d4a0','#704030','#b8945e','#5a3f20'];
+  charts['chart-zona']=new Chart(document.getElementById('chart-zona').getContext('2d'),{
+    type:'doughnut',data:{labels:zonas.map(z=>z.zona),datasets:[{data:zonas.map(z=>z.bultos),backgroundColor:colors.slice(0,zonas.length)}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{font:{size:11}}}}}
   });
-
-  renderSortableTable('tbl-zona',
-    [ {key:'zona',label:'Zona'}, {key:'bultos_fmt',label:'Bultos'}, {key:'clientes_fmt',label:'Clientes'}, {key:'pct',label:'% Total'}, {key:'ratioBC',label:'B/C'} ],
-    zonas, r => r
-  );
+  renderSortableTable('tbl-zona',[{key:'zona',label:'Zona'},{key:'bultos_fmt',label:'Bultos'},{key:'clientes_fmt',label:'Clientes'},{key:'pct',label:'% Total'},{key:'ratioBC',label:'B/C'}],zonas,r=>r);
 }
 
-// ── HISTORIAL ──────────────────────────────────────────────────────────────
+// ── Historial ──────────────────────────────────────────────────────────────
 function refreshHistorial() {
-  const tbl = document.getElementById('tbl-hist');
-  const thead = tbl.querySelector('thead');
-  const tbody = tbl.querySelector('tbody');
-  thead.innerHTML = '<tr><th>Fecha</th><th>Bultos</th><th>Clientes</th><th>Repartidores</th><th>Acciones</th></tr>';
-  if (!records.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin registros</td></tr>'; return; }
-  tbody.innerHTML = records.slice().reverse().map((r,i) => {
-    const idx = records.length - 1 - i;
-    return `<tr class="hist-row">
-      <td>${fmtDate(r.fecha)}</td>
-      <td>${fmt(r.total_bultos)}</td>
-      <td>${fmt(r.total_clientes)}</td>
-      <td>${(r.filas||[]).map(f=>f.rep).join(', ')}</td>
-      <td>
-        <button class="action-btn edit" onclick="editRecord(${idx})" title="Editar">✏️</button>
-        <button class="action-btn del" onclick="deleteRecord(${idx})" title="Eliminar">🗑</button>
-      </td>
-    </tr>`;
+  const tbl=document.getElementById('tbl-hist');
+  tbl.querySelector('thead').innerHTML='<tr><th>Fecha</th><th>Bultos</th><th>Clientes</th><th>Repartidores</th><th>Acciones</th></tr>';
+  if (!records.length) { tbl.querySelector('tbody').innerHTML='<tr><td colspan="5" class="empty">Sin registros</td></tr>'; return; }
+  tbl.querySelector('tbody').innerHTML=records.slice().reverse().map((r,i)=>{
+    const idx=records.length-1-i;
+    return `<tr><td>${fmtDate(r.fecha)}</td><td>${fmt(r.total_bultos)}</td><td>${fmt(r.total_clientes)}</td><td>${(r.filas||[]).map(f=>f.rep).join(', ')}</td><td><button class="action-btn edit" onclick="editRecord(${idx})">✏️</button><button class="action-btn del" onclick="deleteRecord(${idx})">🗑</button></td></tr>`;
   }).join('');
 }
-
-function editRecord(idx) {
-  editingIndex = idx;
-  openModal(records[idx], '✏️ Editar registro — ' + fmtDate(records[idx].fecha));
-}
-
-function deleteRecord(idx) {
-  if (!confirm('¿Eliminar este registro?')) return;
-  records.splice(idx, 1);
-  save(); refreshAll();
-}
+function editRecord(idx) { editingIndex=idx; openModal(records[idx],'✏️ Editar — '+fmtDate(records[idx].fecha)); }
+function deleteRecord(idx) { if(!confirm('¿Eliminar?')) return; records.splice(idx,1); save(); refreshAll(); }
 
 // ── Sortable table ─────────────────────────────────────────────────────────
-function renderSortableTable(tableId, cols, rows, transform) {
-  const tbl = document.getElementById(tableId);
-  const sk = sortState[tableId] || { col: null, asc: true };
-  let sorted = [...rows];
-  if (sk.col) sorted.sort((a,b) => {
-    const av = parseFloat(a[sk.col]) || a[sk.col] || '';
-    const bv = parseFloat(b[sk.col]) || b[sk.col] || '';
-    return sk.asc ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
-  });
-  tbl.querySelector('thead').innerHTML = '<tr>' + cols.map(c =>
-    `<th onclick="sortTable('${tableId}','${c.key}')">${c.label}<span style="margin-left:4px;opacity:.5">${sk.col===c.key?(sk.asc?'▲':'▼'):'↕'}</span></th>`
-  ).join('') + '</tr>';
-  const xformed = sorted.map(r => transform ? transform(r) : r);
-  tbl.querySelector('tbody').innerHTML = xformed.map(r =>
-    '<tr>' + cols.map(c => `<td>${r[c.key] ?? '—'}</td>`).join('') + '</tr>'
-  ).join('');
+function renderSortableTable(tableId,cols,rows,transform) {
+  const tbl=document.getElementById(tableId), sk=sortState[tableId]||{col:null,asc:true};
+  let sorted=[...rows];
+  if(sk.col) sorted.sort((a,b)=>{const av=parseFloat(a[sk.col])||a[sk.col]||'',bv=parseFloat(b[sk.col])||b[sk.col]||'';return sk.asc?(av>bv?1:-1):(av<bv?1:-1);});
+  tbl.querySelector('thead').innerHTML='<tr>'+cols.map(c=>`<th onclick="sortTable('${tableId}','${c.key}')">${c.label}<span style="margin-left:4px;opacity:.5">${sk.col===c.key?(sk.asc?'▲':'▼'):'↕'}</span></th>`).join('')+'</tr>';
+  tbl.querySelector('tbody').innerHTML=(transform?sorted.map(r=>transform(r)):sorted).map(r=>'<tr>'+cols.map(c=>`<td>${r[c.key]??'—'}</td>`).join('')+'</tr>').join('');
 }
+function sortTable(tableId,col) { const sk=sortState[tableId]||{col:null,asc:true}; sortState[tableId]={col,asc:sk.col===col?!sk.asc:true}; refreshAll(); }
 
-function sortTable(tableId, col) {
-  const sk = sortState[tableId] || { col: null, asc: true };
-  sortState[tableId] = { col, asc: sk.col === col ? !sk.asc : true };
-  refreshAll();
+// ── Export / Import ────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!records.length) { alert('No hay datos.'); return; }
+  const rows=[['fecha','total_bultos','total_clientes','repartidor','clientes','bultos','zona']];
+  records.forEach(r=>(r.filas&&r.filas.length?r.filas:[{rep:'',clientes:'',bultos:'',zona:''}]).forEach(f=>rows.push([r.fecha,r.total_bultos,r.total_clientes,f.rep,f.clientes,f.bultos,f.zona])));
+  downloadFile('\uFEFF'+rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n'),'reparto_'+today()+'.csv','text/csv;charset=utf-8;');
 }
+function downloadTemplate() {
+  const rows=[['fecha','total_bultos','total_clientes','repartidor','clientes','bultos','zona'],['2025-01-02','450','38','Sebastián Funes','12','145','San Vicente'],['2025-01-02','450','38','Diego Koubas','14','160','El Soberbio'],['2025-01-02','450','38','Aníbal Serrano','12','145','Andrade']];
+  downloadFile('\uFEFF'+rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n'),'plantilla_reparto.csv','text/csv;charset=utf-8;');
+}
+document.getElementById('csv-input').addEventListener('change',function(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try {
+      const text=ev.target.result.replace(/^\uFEFF/,'');
+      const lines=text.trim().split(/\r?\n/);
+      const header=parseCSVLine(lines[0]).map(h=>h.trim().toLowerCase());
+      const idx={fecha:header.indexOf('fecha'),total_bultos:header.indexOf('total_bultos'),total_clientes:header.indexOf('total_clientes'),rep:header.indexOf('repartidor'),clientes:header.indexOf('clientes'),bultos:header.indexOf('bultos'),zona:header.indexOf('zona')};
+      if(idx.fecha<0) throw new Error('No se encontró columna "fecha".');
+      const dayMap={};
+      for(let i=1;i<lines.length;i++){
+        if(!lines[i].trim()) continue;
+        const cols=parseCSVLine(lines[i]);
+        const fecha=cols[idx.fecha]?.trim(); if(!fecha) continue;
+        if(!dayMap[fecha]) dayMap[fecha]={fecha,total_bultos:0,total_clientes:0,filas:[],_s:false,_sc:false};
+        const d=dayMap[fecha];
+        if(!d._s&&idx.total_bultos>=0&&cols[idx.total_bultos]){d.total_bultos=Number(cols[idx.total_bultos])||0;d._s=true;}
+        if(!d._sc&&idx.total_clientes>=0&&cols[idx.total_clientes]){d.total_clientes=Number(cols[idx.total_clientes])||0;d._sc=true;}
+        const rep=idx.rep>=0?cols[idx.rep]?.trim():'';
+        if(rep) d.filas.push({rep,clientes:idx.clientes>=0?Number(cols[idx.clientes])||0:0,bultos:idx.bultos>=0?Number(cols[idx.bultos])||0:0,zona:idx.zona>=0?cols[idx.zona]?.trim()||'':''});
+      }
+      const imported=Object.values(dayMap);
+      if(!imported.length) throw new Error('No se encontraron registros.');
+      let added=0,replaced=0;
+      imported.forEach(d=>{
+        delete d._s; delete d._sc;
+        const norm=normalizeRecord(d);
+        const ex=records.findIndex(r=>r.fecha===norm.fecha);
+        if(ex>=0){records.splice(ex,1);replaced++;}else{added++;}
+        records.push(norm);
+      });
+      records.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+      save(); refreshAll();
+      alert(`✓ ${added} registros nuevos, ${replaced} reemplazados.`);
+    } catch(err){alert('Error al importar: '+err.message);}
+    e.target.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+});
+function parseCSVLine(line){const r=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}else if(ch===','&&!inQ){r.push(cur);cur='';}else{cur+=ch;}}r.push(cur);return r;}
+function downloadFile(content,filename,mime){const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function today(){return new Date().toISOString().slice(0,10).replace(/-/g,'');}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-function sum(arr) { return arr.reduce((a,b)=>a+(+b||0),0); }
-function avg(arr) { return arr.length ? sum(arr)/arr.length : 0; }
-function fmt(n) { return Number(n).toLocaleString('es-AR'); }
-function fmtD(n) { return Number(n).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:1}); }
-function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+function sum(arr){return arr.reduce((a,b)=>a+(+b||0),0);}
+function avg(arr){return arr.length?sum(arr)/arr.length:0;}
+function fmt(n){return Number(n).toLocaleString('es-AR');}
+function fmtD(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 updateKeyStatus();
