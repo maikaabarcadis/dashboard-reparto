@@ -177,7 +177,10 @@ tr:hover td{background:#f7fafd;}
 .btn-save-alias{background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);padding:5px 11px;font-size:.77rem;cursor:pointer;font-weight:600;font-family:inherit;}
 .save-ok{font-size:.75rem;color:var(--green);margin-left:7px;opacity:0;transition:opacity .3s;font-weight:600;}
 .save-ok.show{opacity:1;}
-.empty{text-align:center;padding:36px;color:var(--sub);font-size:.86rem;}
+.dow-btn{padding:4px 11px;border-radius:20px;border:1px solid var(--border);font-size:.74rem;cursor:pointer;background:var(--bg);color:var(--sub);font-family:inherit;font-weight:600;transition:all .15s;min-width:36px;text-align:center;}
+.dow-btn:hover{border-color:var(--accent);color:var(--accent);}
+.dow-btn.active{background:var(--accent2);color:#fff;border-color:var(--accent2);}
+
 .action-btn{background:none;border:none;cursor:pointer;font-size:.84rem;opacity:.6;padding:2px 4px;}
 .action-btn:hover{opacity:1;}
 .action-btn.edit{color:var(--blue);}
@@ -209,6 +212,7 @@ tr:hover td{background:#f7fafd;}
   <div class="tab active" data-tab="resumen">Resumen</div>
   <div class="tab" data-tab="repartidores">Repartidores</div>
   <div class="tab" data-tab="zonas">Zonas</div>
+  <div class="tab" data-tab="semana">Semana</div>
   <div class="tab" data-tab="historial">Historial</div>
   <div class="tab" data-tab="config">⚙ Configuración</div>
 </div>
@@ -251,6 +255,10 @@ tr:hover td{background:#f7fafd;}
           <button class="btn-all" onclick="setAll('resumen')">Todo</button>
         </div>
         <div class="filter-row">
+          <span class="filter-label">Día semana</span>
+          <div id="dow-resumen" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+        </div>
+        <div class="filter-row">
           <span class="filter-label">Filtros</span>
           <div class="df-wrap" id="dfw-rep-resumen"></div>
           <div class="df-wrap" id="dfw-zona-resumen"></div>
@@ -275,6 +283,10 @@ tr:hover td{background:#f7fafd;}
           </div>
           <div id="presets-rep" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
           <button class="btn-all" onclick="setAll('rep')">Todo</button>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Día semana</span>
+          <div id="dow-rep" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
         </div>
         <div class="filter-row">
           <span class="filter-label">Filtros</span>
@@ -304,6 +316,10 @@ tr:hover td{background:#f7fafd;}
           <button class="btn-all" onclick="setAll('zona')">Todo</button>
         </div>
         <div class="filter-row">
+          <span class="filter-label">Día semana</span>
+          <div id="dow-zona" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+        </div>
+        <div class="filter-row">
           <span class="filter-label">Filtros</span>
           <div class="df-wrap" id="dfw-rep-zona"></div>
           <div class="df-wrap" id="dfw-zona-zona"></div>
@@ -317,6 +333,36 @@ tr:hover td{background:#f7fafd;}
           <div class="table-wrap" style="box-shadow:none;border:none"><table id="tbl-zona"><thead></thead><tbody></tbody></table></div>
         </div>
       </div>
+    </div>
+
+    <!-- SEMANA -->
+    <div class="pane" id="pane-semana">
+      <div class="filter-bar">
+        <div class="filter-row">
+          <span class="filter-label">Período</span>
+          <div class="filter-dates">
+            <input type="date" id="sem-desde" onchange="onFC('semana')">
+            <span style="color:var(--sub);font-size:.8rem">→</span>
+            <input type="date" id="sem-hasta" onchange="onFC('semana')">
+          </div>
+          <div id="presets-semana" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          <button class="btn-all" onclick="setAll('semana')">Todo</button>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Filtros</span>
+          <div class="df-wrap" id="dfw-rep-semana"></div>
+          <div class="df-wrap" id="dfw-zona-semana"></div>
+          <span class="filter-info" id="finfo-semana"></span>
+        </div>
+      </div>
+      <div class="stats-panel" id="stats-semana"></div>
+      <div class="chart-grid">
+        <div class="chart-card chart-full"><h3>Promedio de bultos por día de semana</h3><canvas id="chart-dow-bultos"></canvas></div>
+        <div class="chart-card"><h3>Promedio de clientes por día de semana</h3><canvas id="chart-dow-clientes"></canvas></div>
+        <div class="chart-card"><h3>Drop Size promedio por día de semana</h3><canvas id="chart-dow-drop"></canvas></div>
+      </div>
+      <div class="section-title">Detalle por día de semana</div>
+      <div class="table-wrap"><table id="tbl-semana"><thead></thead><tbody></tbody></table></div>
     </div>
 
     <!-- HISTORIAL -->
@@ -397,9 +443,10 @@ let records=JSON.parse(localStorage.getItem('reparto_v2')||'[]');
 let charts={},sortState={},editingIndex=null;
 // filters: date range + selected reps + selected zonas per tab
 let filters={
-  resumen:{desde:'',hasta:'',reps:new Set(),zonas:new Set()},
-  rep:{desde:'',hasta:'',reps:new Set(),zonas:new Set()},
-  zona:{desde:'',hasta:'',reps:new Set(),zonas:new Set()}
+  resumen:{desde:'',hasta:'',reps:new Set(),zonas:new Set(),dows:new Set()},
+  rep:{desde:'',hasta:'',reps:new Set(),zonas:new Set(),dows:new Set()},
+  zona:{desde:'',hasta:'',reps:new Set(),zonas:new Set(),dows:new Set()},
+  semana:{desde:'',hasta:'',reps:new Set(),zonas:new Set(),dows:new Set()}
 };
 function save(){localStorage.setItem('reparto_v2',JSON.stringify(records));}
 
@@ -452,24 +499,27 @@ function buildPresets(prefix){
 function applyPreset(prefix,i){
   const r=PRESETS[i].fn();
   filters[prefix].desde=r.desde;filters[prefix].hasta=r.hasta;
-  const map={resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta']};
-  document.getElementById(map[prefix][0]).value=r.desde;
-  document.getElementById(map[prefix][1]).value=r.hasta;
+  const map={resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta'],semana:['sem-desde','sem-hasta']};
+  const ids=map[prefix]||[];
+  if(ids[0])document.getElementById(ids[0]).value=r.desde;
+  if(ids[1])document.getElementById(ids[1]).value=r.hasta;
   document.querySelectorAll(`#presets-${prefix} .preset-btn`).forEach((b,j)=>b.classList.toggle('active',j===i));
   refreshAll();
 }
 function onFC(prefix){
-  const map={resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta']};
-  filters[prefix].desde=document.getElementById(map[prefix][0]).value;
-  filters[prefix].hasta=document.getElementById(map[prefix][1]).value;
+  const map={resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta'],semana:['sem-desde','sem-hasta']};
+  const ids=map[prefix]||[];
+  filters[prefix].desde=ids[0]?document.getElementById(ids[0]).value:'';
+  filters[prefix].hasta=ids[1]?document.getElementById(ids[1]).value:'';
   document.querySelectorAll(`#presets-${prefix} .preset-btn`).forEach(b=>b.classList.remove('active'));
   refreshAll();
 }
 function setAll(prefix){
-  filters[prefix].desde='';filters[prefix].hasta='';
-  const map={resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta']};
-  map[prefix].forEach(id=>document.getElementById(id).value='');
+  filters[prefix].desde='';filters[prefix].hasta='';filters[prefix].dows=new Set();
+  const map={resumen:['r-desde','r-hasta'],rep:['rep-desde','rep-hasta'],zona:['z-desde','z-hasta'],semana:['sem-desde','sem-hasta']};
+  (map[prefix]||[]).forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.querySelectorAll(`#presets-${prefix} .preset-btn`).forEach(b=>b.classList.remove('active'));
+  buildDOW(prefix);
   refreshAll();
 }
 function clearChips(type,tab){
@@ -479,7 +529,20 @@ function clearChips(type,tab){
 }
 
 // get all unique reps/zonas from records
-function getAllReps(){return[...new Set(records.flatMap(r=>(r.filas||[]).map(f=>f.rep)))].filter(Boolean).sort();}
+const DAYS=[{l:'Lun',d:1},{l:'Mar',d:2},{l:'Mié',d:3},{l:'Jue',d:4},{l:'Vie',d:5},{l:'Sáb',d:6},{l:'Dom',d:0}];
+function dowOfDate(fecha){const[y,m,d]=fecha.split('-').map(Number);return new Date(y,m-1,d).getDay();}
+function buildDOW(tab){
+  const el=document.getElementById('dow-'+tab);if(!el)return;
+  const sel=filters[tab].dows;
+  el.innerHTML=DAYS.map(({l,d})=>`<button class="dow-btn${sel.has(d)?' active':''}" onclick="toggleDOW('${tab}',${d})">${l}</button>`).join('');
+}
+function toggleDOW(tab,d){
+  const s=filters[tab].dows;
+  if(s.has(d))s.delete(d);else s.add(d);
+  buildDOW(tab);refreshAll();
+}
+
+return[...new Set(records.flatMap(r=>(r.filas||[]).map(f=>f.rep)))].filter(Boolean).sort();}
 function getAllZonas(){return[...new Set(records.flatMap(r=>(r.filas||[]).map(f=>f.zona)))].filter(Boolean).sort();}
 
 // ── Dropdown filters ───────────────────────────────────────────────────────
@@ -674,8 +737,8 @@ function updateLastUpdate(){if(records.length)document.getElementById('last-upda
 // ── Refresh ────────────────────────────────────────────────────────────────
 function refreshAll(){
   updateLastUpdate();
-  ['resumen','rep','zona'].forEach(tab=>{buildPresets(tab);buildDropdown('rep',tab);buildDropdown('zona',tab);});
-  refreshResumen();refreshRep();refreshZona();refreshHistorial();
+  ['resumen','rep','zona','semana'].forEach(tab=>{buildPresets(tab);buildDOW(tab);buildDropdown('rep',tab);buildDropdown('zona',tab);});
+  refreshResumen();refreshRep();refreshZona();refreshSemana();refreshHistorial();
 }
 
 // ── RESUMEN ────────────────────────────────────────────────────────────────
@@ -772,7 +835,84 @@ function refreshZona(){
   renderSortableTable('tbl-zona',[{key:'zona',label:'Zona'},{key:'bultos_fmt',label:'Bultos'},{key:'clientes_fmt',label:'Clientes'},{key:'pct',label:'% Total'},{key:'dropSize',label:'Drop Size'}],zonas,r=>r);
 }
 
-// ── HISTORIAL ──────────────────────────────────────────────────────────────
+// ── SEMANA ─────────────────────────────────────────────────────────────────
+function refreshSemana(){
+  const data=filterRecords('semana');
+  updateFilterInfo('semana',data);
+  const sp=document.getElementById('stats-semana');
+  if(!data.length){
+    sp.innerHTML='<div class="empty">Sin datos para el período seleccionado</div>';
+    ['chart-dow-bultos','chart-dow-clientes','chart-dow-drop'].forEach(id=>destroyChart(id));
+    document.getElementById('tbl-semana').querySelector('tbody').innerHTML='<tr><td colspan="7" class="empty">Sin datos</td></tr>';
+    return;
+  }
+  // Agrupar por día de semana
+  const dowMap={};
+  DAYS.forEach(({l,d})=>{ dowMap[d]={dow:d,label:l,bultos:[],clientes:[],drops:[],dias:0}; });
+  data.forEach(r=>{
+    const d=dowOfDate(r.fecha);
+    if(!dowMap[d])return;
+    dowMap[d].bultos.push(r.total_bultos||0);
+    dowMap[d].clientes.push(r.total_clientes||0);
+    if(r.total_clientes) dowMap[d].drops.push(r.total_bultos/r.total_clientes);
+    dowMap[d].dias++;
+  });
+  const rows=DAYS.map(({d})=>dowMap[d]).filter(r=>r.dias>0);
+  const avgBultos=rows.map(r=>avg(r.bultos));
+  const avgClientes=rows.map(r=>avg(r.clientes));
+  const avgDrops=rows.map(r=>avg(r.drops));
+  const labels=rows.map(r=>r.label);
+  const maxAvgB=Math.max(...avgBultos);
+  const bestDow=rows[avgBultos.indexOf(maxAvgB)]?.label||'—';
+
+  // Stats cards
+  sp.innerHTML=[
+    {l:'Día con más bultos',v:bestDow,s:`Prom: ${fmtD(maxAvgB,0)} bul`,t:'blue-top'},
+    {l:'Mayor Drop Size',v:(()=>{const mx=Math.max(...avgDrops);return rows[avgDrops.indexOf(mx)]?.label||'—';})(),s:`Prom: ${fmtD(Math.max(...avgDrops))}`,t:''},
+    {l:'Días analizados',v:data.length,s:'registros en período',t:''},
+    {l:'Cobertura semanal',v:rows.length+'/7',s:'días con actividad',t:''},
+  ].map(k=>`<div class="stat-card ${k.t||''}"><div class="slabel">${k.l}</div><div class="sval">${k.v}</div><div class="ssub">${k.s}</div></div>`).join('');
+
+  const barOpts=(label,color)=>({
+    type:'bar',data:{labels,datasets:[{label,data:avgBultos,backgroundColor:color,borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#eef2f7'},ticks:{font:{family:'Inter',size:11}}},x:{grid:{display:false},ticks:{font:{family:'Inter',size:12,weight:'600'}}}}}
+  });
+
+  destroyChart('chart-dow-bultos');
+  charts['chart-dow-bultos']=new Chart(document.getElementById('chart-dow-bultos').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Prom. Bultos',data:avgBultos,backgroundColor:avgBultos.map(v=>v===maxAvgB?'rgba(26,107,138,.95)':'rgba(26,107,138,.45)'),borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#eef2f7'},ticks:{font:{family:'Inter',size:11}}},x:{grid:{display:false},ticks:{font:{family:'Inter',size:12,weight:'600'}}}}}
+  });
+  destroyChart('chart-dow-clientes');
+  const maxC=Math.max(...avgClientes);
+  charts['chart-dow-clientes']=new Chart(document.getElementById('chart-dow-clientes').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Prom. Clientes',data:avgClientes,backgroundColor:avgClientes.map(v=>v===maxC?'rgba(34,160,138,.95)':'rgba(34,160,138,.45)'),borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#eef2f7'},ticks:{font:{family:'Inter',size:11}}},x:{grid:{display:false},ticks:{font:{family:'Inter',size:12,weight:'600'}}}}}
+  });
+  destroyChart('chart-dow-drop');
+  const maxD=Math.max(...avgDrops);
+  charts['chart-dow-drop']=new Chart(document.getElementById('chart-dow-drop').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Drop Size',data:avgDrops.map(v=>+v.toFixed(2)),backgroundColor:avgDrops.map(v=>v===maxD?'rgba(232,160,48,.95)':'rgba(232,160,48,.45)'),borderRadius:4,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#eef2f7'},ticks:{font:{family:'Inter',size:11}}},x:{grid:{display:false},ticks:{font:{family:'Inter',size:12,weight:'600'}}}}}
+  });
+
+  // Tabla
+  renderSortableTable('tbl-semana',
+    [{key:'label',label:'Día'},{key:'dias',label:'Ocurrencias'},{key:'avgB',label:'Prom. Bultos'},{key:'sdB',label:'σ Bultos'},{key:'avgC',label:'Prom. Clientes'},{key:'sdC',label:'σ Clientes'},{key:'avgDrop',label:'Drop Size'}],
+    rows.map(r=>({
+      label:r.label,dias:r.dias,
+      avgB:fmtD(avg(r.bultos),1),sdB:fmtD(stddev(r.bultos),1),
+      avgC:fmtD(avg(r.clientes),1),sdC:fmtD(stddev(r.clientes),1),
+      avgDrop:fmtD(avg(r.drops)),
+      _sortB:avg(r.bultos)
+    })),r=>r
+  );
+}
+
+
 function refreshHistorial(){
   const tbl=document.getElementById('tbl-hist');
   tbl.querySelector('thead').innerHTML='<tr><th>Fecha</th><th>Bultos</th><th>Clientes</th><th>Drop Size</th><th>Repartidores</th><th>Acciones</th></tr>';
