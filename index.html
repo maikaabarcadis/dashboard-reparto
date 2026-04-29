@@ -864,20 +864,15 @@ function refreshSemana(){
   const labels=rows.map(r=>r.label);
   const maxAvgB=Math.max(...avgBultos);
   const bestDow=rows[avgBultos.indexOf(maxAvgB)]?.label||'—';
-
-  // Stats cards
-  sp.innerHTML=[
+  const maxC=Math.max(...avgClientes);
+  const maxD=Math.max(...avgDrops);
     {l:'Día con más bultos',v:bestDow,s:`Prom: ${fmtD(maxAvgB,0)} bul`,t:'blue-top'},
     {l:'Mayor Drop Size',v:(()=>{const mx=Math.max(...avgDrops);return rows[avgDrops.indexOf(mx)]?.label||'—';})(),s:`Prom: ${fmtD(Math.max(...avgDrops))}`,t:''},
     {l:'Días analizados',v:data.length,s:'registros en período',t:''},
     {l:'Cobertura semanal',v:rows.length+'/7',s:'días con actividad',t:''},
   ].map(k=>`<div class="stat-card ${k.t||''}"><div class="slabel">${k.l}</div><div class="sval">${k.v}</div><div class="ssub">${k.s}</div></div>`).join('');
 
-  const barOpts=(label,color)=>({
-    type:'bar',data:{labels,datasets:[{label,data:avgBultos,backgroundColor:color,borderRadius:4,borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#eef2f7'},ticks:{font:{family:'Inter',size:11}}},x:{grid:{display:false},ticks:{font:{family:'Inter',size:12,weight:'600'}}}}}
-  });
-
+  const maxC=Math.max(...avgClientes);
   destroyChart('chart-dow-bultos');
   charts['chart-dow-bultos']=new Chart(document.getElementById('chart-dow-bultos').getContext('2d'),{
     type:'bar',
