@@ -67,21 +67,38 @@ header h1{font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:-.2px;displ
 /* Filter bar */
 .filter-bar{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;}
 .filter-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
-.filter-label{font-size:.72rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.filter-label{font-size:.72rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;min-width:72px;}
 .filter-dates{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .filter-dates input[type=date]{border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-size:.82rem;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer;}
 .filter-dates input[type=date]:focus{outline:2px solid var(--accent);}
 .preset-btn{padding:4px 11px;border-radius:20px;border:1px solid var(--border);font-size:.74rem;cursor:pointer;background:var(--bg);color:var(--sub);font-family:inherit;font-weight:500;transition:all .15s;}
 .preset-btn:hover,.preset-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 .btn-all{padding:4px 13px;border-radius:20px;border:none;background:var(--accent2);color:#fff;font-size:.74rem;cursor:pointer;font-weight:600;font-family:inherit;}
-.filter-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
-.fchip{padding:4px 12px;border-radius:20px;border:1px solid var(--border);font-size:.76rem;cursor:pointer;background:var(--bg);color:var(--sub);transition:all .15s;white-space:nowrap;font-family:inherit;}
-.fchip:hover{border-color:var(--accent);color:var(--accent);}
-.fchip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-.fchip.zona.active{background:var(--accent3);border-color:var(--accent3);}
 .filter-info{font-size:.73rem;color:var(--sub);background:var(--bg);padding:3px 10px;border-radius:20px;border:1px solid var(--border);margin-left:auto;}
-.clear-filters{font-size:.73rem;color:var(--red);cursor:pointer;background:none;border:none;font-family:inherit;padding:3px 8px;}
-.clear-filters:hover{text-decoration:underline;}
+
+/* Dropdown filter */
+.df-wrap{position:relative;display:inline-block;}
+.df-btn{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.82rem;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s;white-space:nowrap;}
+.df-btn:hover{border-color:var(--accent);color:var(--accent);}
+.df-btn.has-selection{background:var(--blue-bg);border-color:var(--accent);color:var(--accent);font-weight:700;}
+.df-btn .df-arrow{font-size:.65rem;opacity:.6;transition:transform .2s;}
+.df-btn.open .df-arrow{transform:rotate(180deg);}
+.df-count{background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;font-size:.7rem;font-weight:700;}
+.df-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:260px;overflow:hidden;}
+.df-dropdown.open{display:block;}
+.df-search-wrap{padding:8px 10px;border-bottom:1px solid var(--border);background:#f8fbfd;}
+.df-search{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 9px;font-size:.82rem;font-family:inherit;background:var(--card);}
+.df-search:focus{outline:2px solid var(--accent);}
+.df-actions{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.df-action-btn{flex:1;padding:5px;font-size:.74rem;cursor:pointer;background:none;border:none;color:var(--sub);font-family:inherit;transition:background .15s;}
+.df-action-btn:hover{background:var(--bg);color:var(--accent);}
+.df-action-btn+.df-action-btn{border-left:1px solid var(--border);}
+.df-list{max-height:220px;overflow-y:auto;}
+.df-item{display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:.83rem;transition:background .1s;}
+.df-item:hover{background:var(--blue-bg);}
+.df-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;flex-shrink:0;}
+.df-item label{cursor:pointer;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.df-empty{padding:14px 12px;font-size:.8rem;color:var(--sub);text-align:center;}
 
 /* Stats panel */
 .stats-panel{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px;}
@@ -230,19 +247,14 @@ tr:hover td{background:#f7fafd;}
             <span style="color:var(--sub);font-size:.8rem">→</span>
             <input type="date" id="r-hasta" onchange="onFC('resumen')">
           </div>
-          <div class="filter-chips" id="presets-resumen"></div>
+          <div id="presets-resumen" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
           <button class="btn-all" onclick="setAll('resumen')">Todo</button>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Filtros</span>
+          <div class="df-wrap" id="dfw-rep-resumen"></div>
+          <div class="df-wrap" id="dfw-zona-resumen"></div>
           <span class="filter-info" id="finfo-resumen"></span>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Repartidor</span>
-          <div class="filter-chips" id="fchips-rep-resumen"></div>
-          <button class="clear-filters" onclick="clearChips('rep','resumen')">✕ Limpiar</button>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Zona</span>
-          <div class="filter-chips" id="fchips-zona-resumen"></div>
-          <button class="clear-filters" onclick="clearChips('zona','resumen')">✕ Limpiar</button>
         </div>
       </div>
       <div class="stats-panel" id="stats-resumen"></div>
@@ -261,19 +273,14 @@ tr:hover td{background:#f7fafd;}
             <span style="color:var(--sub);font-size:.8rem">→</span>
             <input type="date" id="rep-hasta" onchange="onFC('rep')">
           </div>
-          <div class="filter-chips" id="presets-rep"></div>
+          <div id="presets-rep" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
           <button class="btn-all" onclick="setAll('rep')">Todo</button>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Filtros</span>
+          <div class="df-wrap" id="dfw-rep-rep"></div>
+          <div class="df-wrap" id="dfw-zona-rep"></div>
           <span class="filter-info" id="finfo-rep"></span>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Repartidor</span>
-          <div class="filter-chips" id="fchips-rep-rep"></div>
-          <button class="clear-filters" onclick="clearChips('rep','rep')">✕ Limpiar</button>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Zona</span>
-          <div class="filter-chips" id="fchips-zona-rep"></div>
-          <button class="clear-filters" onclick="clearChips('zona','rep')">✕ Limpiar</button>
         </div>
       </div>
       <div class="chart-grid">
@@ -293,19 +300,14 @@ tr:hover td{background:#f7fafd;}
             <span style="color:var(--sub);font-size:.8rem">→</span>
             <input type="date" id="z-hasta" onchange="onFC('zona')">
           </div>
-          <div class="filter-chips" id="presets-zona"></div>
+          <div id="presets-zona" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
           <button class="btn-all" onclick="setAll('zona')">Todo</button>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Filtros</span>
+          <div class="df-wrap" id="dfw-rep-zona"></div>
+          <div class="df-wrap" id="dfw-zona-zona"></div>
           <span class="filter-info" id="finfo-zona"></span>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Repartidor</span>
-          <div class="filter-chips" id="fchips-rep-zona"></div>
-          <button class="clear-filters" onclick="clearChips('rep','zona')">✕ Limpiar</button>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Zona</span>
-          <div class="filter-chips" id="fchips-zona-zona"></div>
-          <button class="clear-filters" onclick="clearChips('zona','zona')">✕ Limpiar</button>
         </div>
       </div>
       <div class="chart-grid">
@@ -470,20 +472,86 @@ function clearChips(type,tab){
 function getAllReps(){return[...new Set(records.flatMap(r=>(r.filas||[]).map(f=>f.rep)))].filter(Boolean).sort();}
 function getAllZonas(){return[...new Set(records.flatMap(r=>(r.filas||[]).map(f=>f.zona)))].filter(Boolean).sort();}
 
-function buildChips(type,tab){
-  const id=`fchips-${type}-${tab}`;
-  const el=document.getElementById(id);if(!el)return;
+// ── Dropdown filters ───────────────────────────────────────────────────────
+function buildDropdown(type, tab){
+  const wrapId=`dfw-${type}-${tab}`;
+  const wrap=document.getElementById(wrapId);if(!wrap)return;
   const items=type==='rep'?getAllReps():getAllZonas();
   const sel=type==='rep'?filters[tab].reps:filters[tab].zonas;
-  el.innerHTML=items.map(v=>{
-    const active=sel.has(v)?'active':'';
-    return`<button class="fchip ${type} ${active}" onclick="toggleChip('${type}','${tab}','${v.replace(/'/g,"\\'")}')">${v}</button>`;
-  }).join('');
+  const label=type==='rep'?'Repartidor':'Zona';
+  const ddId=`dd-${type}-${tab}`;
+  const btnId=`ddbtn-${type}-${tab}`;
+  const searchId=`ddsearch-${type}-${tab}`;
+  const listId=`ddlist-${type}-${tab}`;
+  const count=sel.size;
+  wrap.innerHTML=`
+    <button class="df-btn${count?' has-selection':''}" id="${btnId}" onclick="toggleDropdown('${ddId}','${btnId}')">
+      ${label}${count?` <span class="df-count">${count}</span>`:''} <span class="df-arrow">▼</span>
+    </button>
+    <div class="df-dropdown" id="${ddId}">
+      <div class="df-search-wrap">
+        <input class="df-search" id="${searchId}" placeholder="Buscar..." oninput="filterDDList('${searchId}','${listId}')">
+      </div>
+      <div class="df-actions">
+        <button class="df-action-btn" onclick="selectAllDD('${type}','${tab}','${listId}')">Selec. todo</button>
+        <button class="df-action-btn" onclick="clearDD('${type}','${tab}')">Limpiar</button>
+      </div>
+      <div class="df-list" id="${listId}">
+        ${items.length?items.map(v=>`
+          <div class="df-item" data-val="${esc(v)}">
+            <input type="checkbox" id="chk-${type}-${tab}-${esc(v)}" ${sel.has(v)?'checked':''} onchange="toggleDD('${type}','${tab}','${v.replace(/'/g,"\\'")}',this.checked)">
+            <label for="chk-${type}-${tab}-${esc(v)}">${v}</label>
+          </div>`).join(''):'<div class="df-empty">Sin opciones</div>'}
+      </div>
+    </div>`;
 }
-function toggleChip(type,tab,val){
+
+function toggleDropdown(ddId, btnId){
+  const dd=document.getElementById(ddId);
+  const btn=document.getElementById(btnId);
+  const isOpen=dd.classList.contains('open');
+  // close all dropdowns first
+  document.querySelectorAll('.df-dropdown.open').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.df-btn.open').forEach(el=>el.classList.remove('open'));
+  if(!isOpen){dd.classList.add('open');btn.classList.add('open');}
+}
+// close dropdowns when clicking outside
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.df-wrap')){
+    document.querySelectorAll('.df-dropdown.open').forEach(el=>el.classList.remove('open'));
+    document.querySelectorAll('.df-btn.open').forEach(el=>el.classList.remove('open'));
+  }
+});
+
+function filterDDList(searchId, listId){
+  const q=document.getElementById(searchId).value.toLowerCase();
+  document.querySelectorAll(`#${listId} .df-item`).forEach(item=>{
+    item.style.display=item.dataset.val.toLowerCase().includes(q)?'':'none';
+  });
+  const empty=document.querySelector(`#${listId} .df-empty`);
+  if(empty)empty.style.display='';
+}
+function toggleDD(type,tab,val,checked){
   const s=type==='rep'?filters[tab].reps:filters[tab].zonas;
-  if(s.has(val))s.delete(val);else s.add(val);
+  if(checked)s.add(val);else s.delete(val);
+  rebuildDropdownBtn(type,tab);
   refreshAll();
+}
+function rebuildDropdownBtn(type,tab){
+  buildDropdown(type,tab);
+  // reopen dropdown after rebuild
+}
+function selectAllDD(type,tab,listId){
+  const s=type==='rep'?filters[tab].reps:filters[tab].zonas;
+  document.querySelectorAll(`#${listId} .df-item`).forEach(item=>{
+    if(item.style.display!=='none')s.add(item.dataset.val);
+  });
+  buildDropdown(type,tab);refreshAll();
+}
+function clearDD(type,tab){
+  if(type==='rep')filters[tab].reps=new Set();
+  else filters[tab].zonas=new Set();
+  buildDropdown(type,tab);refreshAll();
 }
 
 // Apply all filters to records for a given tab
@@ -596,7 +664,7 @@ function updateLastUpdate(){if(records.length)document.getElementById('last-upda
 // ── Refresh ────────────────────────────────────────────────────────────────
 function refreshAll(){
   updateLastUpdate();
-  ['resumen','rep','zona'].forEach(tab=>{buildPresets(tab);buildChips('rep',tab);buildChips('zona',tab);});
+  ['resumen','rep','zona'].forEach(tab=>{buildPresets(tab);buildDropdown('rep',tab);buildDropdown('zona',tab);});
   refreshResumen();refreshRep();refreshZona();refreshHistorial();
 }
 
