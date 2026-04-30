@@ -412,7 +412,17 @@ function saveAliasData(t,d){localStorage.setItem('aliases_'+t,JSON.stringify(d))
 function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
 function resolveAlias(t,v){var a=loadAliases(t),n=normalize(v);for(var i=0;i<a.length;i++){if(normalize(a[i][0])===n)return a[i][1];}return v;}
 function normalizeRecord(r){if(!r.filas)return r;r.filas=r.filas.map(function(f){return Object.assign({},f,{rep:resolveAlias('rep',f.rep),zona:resolveAlias('zona',f.zona)});});return r;}
-function renormalizeAll(){if(!records.length){alert('No hay registros.');return;}records=records.map(function(r){return normalizeRecord(Object.assign({},r,{filas:(r.filas||[]).map(function(f){return Object.assign({},f);})});});save();refreshAll();var ok=document.getElementById('save-ok-renorm');ok.classList.add('show');setTimeout(function(){ok.classList.remove('show');},2500);}
+function renormalizeAll(){
+  if(!records.length){alert('No hay registros.');return;}
+  records=records.map(function(r){
+    var newFilas=(r.filas||[]).map(function(f){return Object.assign({},f);});
+    return normalizeRecord(Object.assign({},r,{filas:newFilas}));
+  });
+  save();refreshAll();
+  var ok=document.getElementById('save-ok-renorm');
+  ok.classList.add('show');
+  setTimeout(function(){ok.classList.remove('show');},2500);
+}
 
 function renderAliasTable(t){var d=loadAliases(t);document.getElementById('alias-'+t+'-body').innerHTML=d.map(function(r,i){return'<tr><td><input value="'+esc(r[0])+'" onchange="updateAlias(\''+t+'\','+i+',0,this.value)"></td><td><input value="'+esc(r[1])+'" onchange="updateAlias(\''+t+'\','+i+',1,this.value)"></td><td><button class="del-row-btn" onclick="removeAlias(\''+t+'\','+i+')">✕</button></td></tr>';}).join('');}
 function esc(s){return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
