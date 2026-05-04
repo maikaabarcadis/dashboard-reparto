@@ -795,13 +795,16 @@ function refreshRep(){
     var ds=r.clientes?(r.bultos/r.clientes):0;
     return Object.assign({},r,{bpd:r.bpd_arr.length?(r.bultos/r.bpd_arr.length).toFixed(1):0,dropSize:ds,dropSizeFmt:fmtD(ds),sdBpd:fmtD(stddev(r.bpd_arr),1)});
   });
-  // promedio calculado solo con los repartidores visibles (filtro aplicado)
   var avgDrop=avg(reps.map(function(r){return r.dropSize;}));
   reps=reps.map(function(r){
     var pct=avgDrop&&r.dropSize?((r.dropSize-avgDrop)/avgDrop*100):0;
     var b=pct>=10?'green':pct<=-10?'red':'blue';
-    return Object.assign({},r,{pctDS:pct,vs:'<span class="badge '+b+'">'+(pct>0?'+':'')+pct.toFixed(1)+'%</span>'});
+    return Object.assign({},r,{
+      pctDS:pct,
+      vs:'<span class="badge '+b+'">'+(pct>0?'+':'')+pct.toFixed(1)+'%</span>'
+    });
   });
+  destroyChart('chart-rep');
   destroyChart('chart-rep');
   var s=reps.slice().sort(function(a,b){return b.bultos-a.bultos;});
   charts['chart-rep']=new Chart(document.getElementById('chart-rep').getContext('2d'),{
@@ -809,10 +812,16 @@ function refreshRep(){
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#eef2f7'}},y:{}}}
   });
   renderSortableTable('tbl-rep',
-    [{key:'rep',label:'Repartidor'},{key:'bultos',label:'Bultos'},{key:'clientes',label:'Clientes'},{key:'bpd',label:'Bul/Día'},{key:'dropSizeFmt',label:'Drop Size'},{key:'sdBpd',label:'σ Bul/Día'},{key:'vs',label:'vs Prom. DS'}],
-    reps,function(row){
-      return Object.assign({},row,{bultos:fmt(row.bultos),clientes:fmt(row.clientes),_sortVS:row.pctDS});
-    });
+    [{key:'rep',label:'Repartidor'},{key:'bultos',label:'Bultos'},{key:'clientes',label:'Clientes'},{key:'bpd',label:'Bul/D\u00eda'},{key:'dropSizeFmt',label:'Drop Size'},{key:'sdBpd',label:'\u03c3 Bul/D\u00eda'},{key:'vs',label:'vs Prom. DS'}],
+    reps,
+    function(row){
+      return Object.assign({},row,{
+        bultos:fmt(row.bultos),
+        clientes:fmt(row.clientes),
+        _pctDS:row.pctDS
+      });
+    }
+  );
 }
 
 // ── Zonas ──────────────────────────────────────────────────────────────────
