@@ -94,6 +94,7 @@ header h1{font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:-.2px;}
 .stat-card.blue-top{border-top-color:var(--accent);}
 .stat-card.yellow-top{border-top-color:var(--yellow);}
 .stat-card .slabel{font-size:.68rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.stat-card .slabel.no-upper{text-transform:none;}
 .stat-card .sval{font-size:1.6rem;font-weight:700;color:var(--accent2);margin:4px 0 2px;letter-spacing:-.5px;}
 .stat-card .ssub{font-size:.72rem;color:var(--sub);}
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
@@ -762,12 +763,12 @@ function refreshResumen(){
     {l:'Total Bultos',v:fmt(tB),s:'Prom: '+fmt(Math.round(aB))+' / día',t:'blue-top'},
     {l:'Total Clientes',v:fmt(tC),s:'Prom: '+fmt(Math.round(aC))+' / día',t:''},
     {l:'Drop Size (B/C)',v:fmtD(avgDrop),s:'σ: '+fmtD(sdDrop),t:''},
-    {l:'σ Bultos/día',v:fmtD(sdB),s:'CV: '+(aB?fmtD(sdB/aB*100,1):'—')+'%',t:'yellow-top'},
-    {l:'σ Clientes/día',v:fmtD(sdC),s:'CV: '+(aC?fmtD(sdC/aC*100,1):'—')+'%',t:'yellow-top'},
+    {l:'σ Bultos/día',cls:'no-upper',v:fmtD(sdB),s:'CV: '+(aB?fmtD(sdB/aB*100,1):'—')+'%',t:'yellow-top'},
+    {l:'σ Clientes/día',cls:'no-upper',v:fmtD(sdC),s:'CV: '+(aC?fmtD(sdC/aC*100,1):'—')+'%',t:'yellow-top'},
     {l:'Máx. Bultos/día',v:fmt(Math.max.apply(null,bultos)),s:'Mín: '+fmt(Math.min.apply(null,bultos)),t:''},
     {l:'Máx. Clientes/día',v:fmt(Math.max.apply(null,clientes)),s:'Mín: '+fmt(Math.min.apply(null,clientes)),t:''},
     {l:'Días registrados',v:data.length,s:'en el período',t:''},
-  ].map(function(k){return'<div class="stat-card '+k.t+'"><div class="slabel">'+k.l+'</div><div class="sval">'+k.v+'</div><div class="ssub">'+k.s+'</div></div>';}).join('');
+  ].map(function(k){return'<div class="stat-card '+k.t+'"><div class="slabel'+(k.cls?' '+k.cls:'')+'">'+k.l+'</div><div class="sval">'+k.v+'</div><div class="ssub">'+k.s+'</div></div>';}).join('');
   destroyChart('chart-evol');
   charts['chart-evol']=new Chart(document.getElementById('chart-evol').getContext('2d'),{
     data:{labels:data.map(function(r){return fmtDate(r.fecha);}),datasets:[
