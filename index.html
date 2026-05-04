@@ -236,6 +236,7 @@ tr:hover td{background:#f7fafd;}
           <span class="filter-label">Filtros</span>
           <div class="df-wrap" id="dfw-rep-resumen"></div>
           <div class="df-wrap" id="dfw-zona-resumen"></div>
+          <button class="auto-filter-btn toggle-btn off" onclick="cycleAutoFilter()">&#127978; Autoservicios</button>
           <span class="filter-info" id="finfo-resumen"></span>
         </div>
       </div>
@@ -264,6 +265,7 @@ tr:hover td{background:#f7fafd;}
           <span class="filter-label">Filtros</span>
           <div class="df-wrap" id="dfw-rep-rep"></div>
           <div class="df-wrap" id="dfw-zona-rep"></div>
+          <button class="auto-filter-btn toggle-btn off" onclick="cycleAutoFilter()">&#127978; Autoservicios</button>
           <span class="filter-info" id="finfo-rep"></span>
         </div>
       </div>
@@ -293,7 +295,7 @@ tr:hover td{background:#f7fafd;}
           <span class="filter-label">Filtros</span>
           <div class="df-wrap" id="dfw-rep-zona"></div>
           <div class="df-wrap" id="dfw-zona-zona"></div>
-          <button id="btn-toggle-auto" class="toggle-btn off" onclick="toggleAutoservicios()">&#127978; Autoservicios</button>
+          <button class="auto-filter-btn toggle-btn off" onclick="cycleAutoFilter()">&#127978; Autoservicios</button>
           <span class="filter-info" id="finfo-zona"></span>
         </div>
       </div>
@@ -322,6 +324,7 @@ tr:hover td{background:#f7fafd;}
           <span class="filter-label">Filtros</span>
           <div class="df-wrap" id="dfw-rep-semana"></div>
           <div class="df-wrap" id="dfw-zona-semana"></div>
+          <button class="auto-filter-btn toggle-btn off" onclick="cycleAutoFilter()">&#127978; Autoservicios</button>
           <span class="filter-info" id="finfo-semana"></span>
         </div>
       </div>
@@ -491,12 +494,42 @@ function saveCoords(){var out={};document.querySelectorAll('#coords-body tr').fo
 function renderCoordsTable(){var coords=loadCoords();document.getElementById('coords-body').innerHTML=Object.keys(coords).map(function(z){return'<tr><td><input value="'+esc(z)+'"></td><td><input type="number" step="0.0001" value="'+coords[z].lat+'"></td><td><input type="number" step="0.0001" value="'+coords[z].lon+'"></td><td><button class="del-row-btn" onclick="this.closest(\'tr\').remove()">&#10005;</button></td></tr>';}).join('');}
 function addCoordRow(){var tb=document.getElementById('coords-body');var tr=document.createElement('tr');tr.innerHTML='<td><input placeholder="Zona"></td><td><input type="number" step="0.0001" placeholder="-27.0"></td><td><input type="number" step="0.0001" placeholder="-54.0"></td><td><button class="del-row-btn" onclick="this.closest(\'tr\').remove()">&#10005;</button></td>';tb.appendChild(tr);}
 
-// ── Autoservicios ──────────────────────────────────────────────────────────
+// ── Autoservicios global filter ────────────────────────────────────────────
+var autoFilter='all'; // 'all' | 'auto' | 'regular'
+function cycleAutoFilter(tab){
+  if(autoFilter==='all')autoFilter='auto';
+  else if(autoFilter==='auto')autoFilter='regular';
+  else autoFilter='all';
+  updateAutoButtons();
+  refreshAll();
+}
+function updateAutoButtons(){
+  document.querySelectorAll('.auto-filter-btn').forEach(function(btn){
+    btn.className='auto-filter-btn toggle-btn '+(autoFilter==='all'?'off':autoFilter==='auto'?'on':'on');
+    btn.style.background=autoFilter==='all'?'':autoFilter==='auto'?'#fdf5e6':'#e8f3f8';
+    btn.style.color=autoFilter==='all'?'':'';
+    btn.style.borderColor=autoFilter==='all'?'':'';
+    if(autoFilter==='all')btn.textContent='\u{1F3EA} Autoservicios';
+    else if(autoFilter==='auto')btn.textContent='\u{1F3EA} Solo autoserv.';
+    else btn.textContent='\u{1F3EA} Solo regulares';
+  });
+}
+
+
 function loadAutoservicios(){var s=localStorage.getItem('autoservicios');return s?JSON.parse(s):DEFAULT_AUTO.slice();}
 function saveAutoservicios(){var list=[];document.querySelectorAll('#auto-list .auto-chip').forEach(function(el){list.push(el.dataset.val);});localStorage.setItem('autoservicios',JSON.stringify(list));showSaveOk('save-ok-auto');}
 function renderAutoList(){var list=loadAutoservicios();document.getElementById('auto-list').innerHTML=list.map(function(v){return'<span class="auto-chip" data-val="'+esc(v)+'" style="display:inline-flex;align-items:center;gap:5px;background:#fdf5e6;border:1px solid #f0c870;border-radius:20px;padding:3px 10px;font-size:.78rem;color:#8a5e10">'+esc(v)+'<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#8a5e10;font-size:.9rem;padding:0">&#10005;</button></span>';}).join('');}
 function addAutoservicio(){var inp=document.getElementById('auto-input'),v=inp.value.trim();if(!v)return;var span=document.createElement('span');span.className='auto-chip';span.dataset.val=v;span.style.cssText='display:inline-flex;align-items:center;gap:5px;background:#fdf5e6;border:1px solid #f0c870;border-radius:20px;padding:3px 10px;font-size:.78rem;color:#8a5e10';span.innerHTML=esc(v)+'<button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#8a5e10;font-size:.9rem;padding:0">&#10005;</button>';document.getElementById('auto-list').appendChild(span);inp.value='';}
-function toggleAutoservicios(){showAutoOnly=!showAutoOnly;var btn=document.getElementById('btn-toggle-auto');btn.classList.toggle('on',showAutoOnly);btn.classList.toggle('off',!showAutoOnly);refreshZona();}
+function isAutoservicio(zona){var list=loadAutoservicios();return list.some(function(a){return normalize(a)===normalize(zona);});}
+function applyAutoFilter(filas){
+  if(autoFilter==='all')return filas;
+  return filas.filter(function(f){
+    var ia=isAutoservicio(f.zona);
+    return autoFilter==='auto'?ia:!ia;
+  });
+}
+// legacy toggle kept for zona tab button (now just calls cycleAutoFilter)
+function toggleAutoservicios(){cycleAutoFilter();}
 
 // ── Tabs ───────────────────────────────────────────────────────────────────
 document.querySelectorAll('.tab').forEach(function(t){
@@ -591,9 +624,12 @@ function filterRecords(tab){
     if(f.dows&&f.dows.size&&!f.dows.has(dowOfDate(r.fecha)))return false;
     return true;
   });
-  if(f.reps.size||f.zonas.size){
+  // apply autoservicio filter + dropdown filters
+  var needFilas=f.reps.size||f.zonas.size||autoFilter!=='all';
+  if(needFilas){
     data=data.map(function(r){
       var filas=(r.filas||[]).slice();
+      filas=applyAutoFilter(filas);
       if(f.reps.size)filas=filas.filter(function(x){return f.reps.has(x.rep);});
       if(f.zonas.size)filas=filas.filter(function(x){return f.zonas.has(x.zona);});
       if(!filas.length)return null;
@@ -829,15 +865,12 @@ function refreshRep(){
 // ── Zonas ──────────────────────────────────────────────────────────────────
 function refreshZona(){
   var data=filterRecords('zona');updateFilterInfo('zona',data);
-  var autoList=loadAutoservicios();
   var zonaMap={};
   data.forEach(function(r){
     (r.filas||[]).forEach(function(f){
       var z=f.zona||'Sin zona';
-      var isAuto=autoList.some(function(a){return normalize(a)===normalize(z);});
-      if(showAutoOnly&&!isAuto)return;
-      if(!showAutoOnly&&isAuto)return;
-      if(!zonaMap[z])zonaMap[z]={zona:z,bultos:0,clientes:0,isAuto:isAuto};
+      var ia=isAutoservicio(z);
+      if(!zonaMap[z])zonaMap[z]={zona:z,bultos:0,clientes:0,isAuto:ia};
       zonaMap[z].bultos+=f.bultos||0;zonaMap[z].clientes+=f.clientes||0;
     });
   });
@@ -868,20 +901,39 @@ function refreshZona(){
 }
 
 // ── Map ────────────────────────────────────────────────────────────────────
+// Resolves a zone name to its coordinates, trying:
+// 1. Exact match on canonical name
+// 2. Resolve via zona alias (so "SVT" finds coords stored as "San Vicente")
+// 3. Try all alias entries whose canonical matches the zone
+function resolveCoords(zona, coords){
+  if(coords[zona])return coords[zona];
+  // try resolving the zone name through aliases
+  var canonical=resolveAlias('zona',zona);
+  if(coords[canonical])return coords[canonical];
+  // try reverse: maybe coords are stored with a short code
+  var aliases=loadAliases('zona');
+  var nz=normalize(zona);
+  for(var i=0;i<aliases.length;i++){
+    if(normalize(aliases[i][1])===nz&&coords[aliases[i][0]])return coords[aliases[i][0]];
+    if(normalize(aliases[i][0])===nz&&coords[aliases[i][1]])return coords[aliases[i][1]];
+  }
+  return null;
+}
 function renderMap(zonas){
   if(typeof L==='undefined'){loadLeaflet(function(){renderMap(zonas);});return;}
   var coords=loadCoords();
-  var withCoords=zonas.filter(function(z){return coords[z.zona];});
+  var withCoords=zonas.filter(function(z){return resolveCoords(z.zona,coords);});
   var mapWrap=document.getElementById('zona-map-wrap');
   if(!withCoords.length){mapWrap.innerHTML='<div class="empty" style="padding:40px">Carg\u00e1 coordenadas en \u2699\uFE0F Configuraci\u00f3n para ver las zonas en el mapa.</div>';return;}
   if(!mapWrap.querySelector('#leaflet-map')){mapWrap.innerHTML='<div id="leaflet-map" style="width:100%;height:380px;border-radius:8px;border:1px solid var(--border)"></div>';}
   if(mapInstance){mapInstance.remove();mapInstance=null;}
-  var first=coords[withCoords[0].zona];
-  mapInstance=L.map('leaflet-map').setView([first.lat,first.lon],9);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(mapInstance);
+  var firstC=resolveCoords(withCoords[0].zona,coords);
+  mapInstance=L.map('leaflet-map').setView([firstC.lat,firstC.lon],9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'\u00a9 OpenStreetMap'}).addTo(mapInstance);
   var maxB=Math.max.apply(null,withCoords.map(function(z){return z.bultos;}));
   withCoords.forEach(function(z){
-    var c=coords[z.zona];var r=Math.max(8,Math.round(z.bultos/maxB*30));
+    var c=resolveCoords(z.zona,coords);
+    var r=Math.max(8,Math.round(z.bultos/maxB*30));
     var color=z.isAuto?'#e8a030':'#1a6b8a';
     L.circleMarker([c.lat,c.lon],{radius:r,fillColor:color,color:'#fff',weight:2,fillOpacity:.8}).addTo(mapInstance)
       .bindPopup('<b>'+z.zona+'</b><br>Bultos: '+fmt(z.bultos)+'<br>Clientes: '+fmt(z.clientes)+'<br>Drop Size: '+z.ds_f+(z.isAuto?'<br><i>Autoservicio</i>':''));
