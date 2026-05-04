@@ -794,7 +794,13 @@ function refreshRep(){
     var ds=r.clientes?(r.bultos/r.clientes):0;
     return Object.assign({},r,{bpd:r.bpd_arr.length?(r.bultos/r.bpd_arr.length).toFixed(1):0,dropSize:ds,dropSizeFmt:fmtD(ds),sdBpd:fmtD(stddev(r.bpd_arr),1)});
   });
+  // promedio calculado solo con los repartidores visibles (filtro aplicado)
   var avgDrop=avg(reps.map(function(r){return r.dropSize;}));
+  reps=reps.map(function(r){
+    var pct=avgDrop&&r.dropSize?((r.dropSize-avgDrop)/avgDrop*100):0;
+    var b=pct>=10?'green':pct<=-10?'red':'blue';
+    return Object.assign({},r,{pctDS:pct,vs:'<span class="badge '+b+'">'+(pct>0?'+':'')+pct.toFixed(1)+'%</span>'});
+  });
   destroyChart('chart-rep');
   var s=reps.slice().sort(function(a,b){return b.bultos-a.bultos;});
   charts['chart-rep']=new Chart(document.getElementById('chart-rep').getContext('2d'),{
@@ -804,9 +810,7 @@ function refreshRep(){
   renderSortableTable('tbl-rep',
     [{key:'rep',label:'Repartidor'},{key:'bultos',label:'Bultos'},{key:'clientes',label:'Clientes'},{key:'bpd',label:'Bul/Día'},{key:'dropSizeFmt',label:'Drop Size'},{key:'sdBpd',label:'σ Bul/Día'},{key:'vs',label:'vs Prom. DS'}],
     reps,function(row){
-      var pct=avgDrop&&row.dropSize?((row.dropSize-avgDrop)/avgDrop*100):0;
-      var b=pct>=10?'green':pct<=-10?'red':'blue';
-      return Object.assign({},row,{bultos:fmt(row.bultos),clientes:fmt(row.clientes),vs:'<span class="badge '+b+'">'+(pct>0?'+':'')+pct.toFixed(1)+'%</span>'});
+      return Object.assign({},row,{bultos:fmt(row.bultos),clientes:fmt(row.clientes),_sortVS:row.pctDS});
     });
 }
 
@@ -926,7 +930,7 @@ function renderIndicadores(){
     {nombre:'Bultos por Día (Bul/Día)',tag:'operativo',formula:'Bultos Totales ÷ Días trabajados',desc:'Productividad diaria del repartidor. Permite comparar el volumen promedio manejado por jornada.'},
     {nombre:'Desviación Estándar Bultos (σ)',tag:'variabilidad',formula:'√( Σ(xi - x̄)² / N )',desc:'Mide cuánto varía la carga diaria de bultos respecto al promedio. Un σ alto indica demanda irregular; un σ bajo indica operación consistente.'},
     {nombre:'Coeficiente de Variación (CV%)',tag:'variabilidad',formula:'(σ ÷ Promedio) × 100',desc:'Versión relativa de la desviación estándar expresada en porcentaje. Permite comparar la variabilidad entre repartidores o períodos con distintos volúmenes. CV < 20% = estable; CV > 40% = muy variable.'},
-    {nombre:'vs Promedio Drop Size',tag:'eficiencia',formula:'(DS_repartidor - DS_promedio) ÷ DS_promedio × 100',desc:'Compara el Drop Size individual de cada repartidor con el promedio del equipo. Verde: +10% o más sobre el promedio. Rojo: -10% o más por debajo. Azul: dentro del rango normal.'},
+    {nombre:'vs Promedio Drop Size',tag:'eficiencia',formula:'(DS_repartidor - DS_promedio_filtrado) ÷ DS_promedio_filtrado × 100',desc:'Compara el Drop Size individual contra el promedio del grupo visible (respetando los filtros activos). Si filtrás por repartidor o zona, el promedio se recalcula solo con los repartidores seleccionados, permitiendo análisis por grupos. Verde: +10% o más sobre el promedio. Rojo: -10% o más por debajo. Azul: dentro del rango normal. Ejemplo: Cristian Obyszuk con Drop Size 35,87 vs promedio grupal 9,47 da +279,8% porque reparte exclusivamente autoservicios de alto volumen por cliente.'},
     {nombre:'% del Total (Zonas)',tag:'operativo',formula:'Bultos_zona ÷ Bultos_totales × 100',desc:'Participación porcentual de cada zona en el total de bultos entregados del período. Indica la relevancia relativa de cada zona en la operación.'},
     {nombre:'Drop Size por Zona',tag:'eficiencia',formula:'Bultos_zona ÷ Clientes_zona',desc:'Promedio de bultos por cliente para una zona específica. Zonas con Drop Size alto suelen ser puntos de mayor volumen como autoservicios o distribuidores.'},
     {nombre:'Promedio por Día de Semana',tag:'operativo',formula:'Σ valores del día ÷ cantidad de ocurrencias de ese día',desc:'Promedio histórico de bultos, clientes o Drop Size para cada día de la semana. Permite identificar patrones semanales y días de mayor o menor actividad.'},
@@ -940,7 +944,17 @@ function renderIndicadores(){
 function renderSortableTable(id,cols,rows,transform){
   var tbl=document.getElementById(id),sk=sortState[id]||{col:null,asc:true};
   var sorted=rows.slice();
-  if(sk.col){sorted.sort(function(a,b){var av=parseFloat(a[sk.col])||a[sk.col]||'',bv=parseFloat(b[sk.col])||b[sk.col]||'';return sk.asc?(av>bv?1:-1):(av<bv?1:-1);});}
+  if(sk.col){
+    sorted.sort(function(a,b){
+      // use numeric sort key if available (e.g. _sortVS for vs column)
+      var sortKey=sk.col==='vs'?'_sortVS':sk.col;
+      var av=parseFloat(a[sortKey]);
+      var bv=parseFloat(b[sortKey]);
+      if(isNaN(av))av=a[sortKey]||'';
+      if(isNaN(bv))bv=b[sortKey]||'';
+      return sk.asc?(av>bv?1:-1):(av<bv?1:-1);
+    });
+  }
   tbl.querySelector('thead').innerHTML='<tr>'+cols.map(function(c){return'<th onclick="sortTable(\''+id+'\',\''+c.key+'\')">'+c.label+' <span style="opacity:.4">'+(sk.col===c.key?(sk.asc?'▲':'▼'):'↕')+'</span></th>';}).join('')+'</tr>';
   var xf=transform?sorted.map(transform):sorted;
   tbl.querySelector('tbody').innerHTML=xf.map(function(r){return'<tr>'+cols.map(function(c){return'<td>'+(r[c.key]!=null?r[c.key]:'—')+'</td>';}).join('')+'</tr>';}).join('');
