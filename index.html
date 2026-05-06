@@ -274,6 +274,22 @@ tr:hover td{background:#f7fafd;}
       </div>
       <div class="section-title">Detalle por repartidor</div>
       <div class="table-wrap"><table id="tbl-rep"><thead></thead><tbody></tbody></table></div>
+      <div class="chart-card chart-full" style="margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <h3 style="margin:0">Distribución normal — posición de cada repartidor</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:.75rem;color:var(--sub);font-weight:600">Indicador:</span>
+            <select id="gauss-metric" onchange="refreshRep()" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;font-size:.82rem;font-family:inherit;background:var(--bg);cursor:pointer;">
+              <option value="ds">Drop Size (B/C)</option>
+              <option value="bpd">Bultos / Día</option>
+              <option value="bultos">Bultos Totales</option>
+              <option value="clientes">Clientes Totales</option>
+            </select>
+          </div>
+        </div>
+        <canvas id="chart-gauss" style="max-height:300px"></canvas>
+        <div id="gauss-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:.75rem;"></div>
+      </div>
     </div>
     <div class="pane" id="pane-zonas">
       <div class="filter-bar">
@@ -860,9 +876,141 @@ function refreshRep(){
     [{key:'rep',label:'Repartidor'},{key:'bultos_f',label:'Bultos'},{key:'clientes_f',label:'Clientes'},{key:'bpd_f',label:'Bul/D\u00eda'},{key:'ds_f',label:'Drop Size'},{key:'sd_f',label:'\u03c3 Bul/D\u00eda'},{key:'vs',label:'vs Prom. DS'}],
     reps, null
   );
+  renderGauss(reps);
 }
 
-// ── Zonas ──────────────────────────────────────────────────────────────────
+// ── Gauss chart ────────────────────────────────────────────────────────────
+function gaussY(x, mean, sd){
+  if(sd===0)return 0;
+  return (1/(sd*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*Math.pow((x-mean)/sd,2));
+}
+function renderGauss(reps){
+  destroyChart('chart-gauss');
+  var sel=document.getElementById('gauss-metric');
+  if(!sel)return;
+  var metric=sel.value;
+  var metricLabel={ds:'Drop Size (B/C)',bpd:'Bultos / D\u00eda',bultos:'Bultos Totales',clientes:'Clientes Totales'}[metric]||metric;
+
+  // extract value per rep for selected metric
+  var vals=reps.map(function(r){
+    if(metric==='ds')return r.ds;
+    if(metric==='bpd')return r.bpd;
+    if(metric==='bultos')return r.bultos;
+    if(metric==='clientes')return r.clientes;
+    return 0;
+  });
+  var mean=avg(vals);
+  var sd=stddev(vals);
+  if(reps.length<2||sd===0){
+    document.getElementById('gauss-legend').innerHTML='<span style="color:var(--sub)">Se necesitan al menos 2 repartidores con datos distintos.</span>';
+    return;
+  }
+
+  // build curve points
+  var range=sd*3.5;
+  var xMin=mean-range, xMax=mean+range;
+  var steps=200;
+  var step=(xMax-xMin)/steps;
+  var curveX=[],curveY=[];
+  for(var i=0;i<=steps;i++){
+    var x=xMin+i*step;
+    curveX.push(x);
+    curveY.push(gaussY(x,mean,sd));
+  }
+  var maxY=Math.max.apply(null,curveY);
+
+  // zone fills: ±1σ = normal, ±2σ = notable, beyond = outlier
+  function zoneFill(xArr,yArr,lo,hi,color){
+    var xs=[],ys=[];
+    for(var i=0;i<xArr.length;i++){if(xArr[i]>=lo&&xArr[i]<=hi){xs.push(xArr[i]);ys.push(yArr[i]);}}
+    if(!xs.length)return null;
+    return {type:'line',data:xs.map(function(x,i){return{x:x,y:ys[i]};}),fill:'origin',backgroundColor:color,borderWidth:0,pointRadius:0,tension:0.4};
+  }
+
+  var datasets=[];
+  // zone fills
+  var z1=zoneFill(curveX,curveY,mean-sd,mean+sd,'rgba(26,158,122,.15)');
+  var z2a=zoneFill(curveX,curveY,mean-2*sd,mean-sd,'rgba(232,160,48,.12)');
+  var z2b=zoneFill(curveX,curveY,mean+sd,mean+2*sd,'rgba(232,160,48,.12)');
+  var z3a=zoneFill(curveX,curveY,xMin,mean-2*sd,'rgba(217,79,61,.10)');
+  var z3b=zoneFill(curveX,curveY,mean+2*sd,xMax,'rgba(217,79,61,.10)');
+  [z1,z2a,z2b,z3a,z3b].forEach(function(d){if(d)datasets.push(d);});
+
+  // main curve
+  datasets.push({
+    type:'line',
+    data:curveX.map(function(x,i){return{x:x,y:curveY[i]};}),
+    borderColor:'rgba(26,107,138,.8)',borderWidth:2.5,
+    fill:false,pointRadius:0,tension:0.4,label:'Distribuci\u00f3n normal'
+  });
+
+  // mean line
+  datasets.push({
+    type:'line',
+    data:[{x:mean,y:0},{x:mean,y:maxY*1.05}],
+    borderColor:'rgba(26,107,138,.6)',borderWidth:1.5,borderDash:[6,4],
+    fill:false,pointRadius:0,label:'Promedio: '+fmtD(mean)
+  });
+
+  // one point per repartidor
+  var repColors=['#1a6b8a','#22a08a','#d94f3d','#e8a030','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#64748b','#0891b2','#7c3aed','#be123c','#15803d','#b45309'];
+  reps.forEach(function(r,i){
+    var v=vals[i];
+    var y=gaussY(v,mean,sd);
+    var z=sd?(v-mean)/sd:0;
+    var color=repColors[i%repColors.length];
+    datasets.push({
+      type:'scatter',
+      data:[{x:v,y:y}],
+      backgroundColor:color,borderColor:'#fff',borderWidth:2,
+      pointRadius:7,pointHoverRadius:9,
+      label:r.rep+' ('+fmtD(v)+')',
+      _z:z,_rep:r.rep,_val:v
+    });
+  });
+
+  var ctx=document.getElementById('chart-gauss').getContext('2d');
+  charts['chart-gauss']=new Chart(ctx,{
+    data:{datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label:function(ctx){
+              if(ctx.dataset._rep){
+                var z=ctx.dataset._z;
+                var pos=z>=0?'+'+fmtD(z,1)+'\u03c3':fmtD(z,1)+'\u03c3';
+                return ctx.dataset._rep+': '+fmtD(ctx.dataset._val)+' ('+pos+')';
+              }
+              return ctx.dataset.label||'';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{type:'linear',title:{display:true,text:metricLabel,font:{size:11}},grid:{color:'#eef2f7'}},
+        y:{display:false,beginAtZero:true}
+      }
+    }
+  });
+
+  // custom legend
+  var legendEl=document.getElementById('gauss-legend');
+  var legendHtml='';
+  legendHtml+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:rgba(26,158,122,.3)"></span> \u00b11\u03c3 normal</span>';
+  legendHtml+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:rgba(232,160,48,.3)"></span> \u00b12\u03c3 notable</span>';
+  legendHtml+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:rgba(217,79,61,.25)"></span> &gt;\u00b12\u03c3 outlier</span>';
+  legendHtml+='<span style="flex:1"></span>';
+  reps.forEach(function(r,i){
+    var color=repColors[i%repColors.length];
+    legendHtml+='<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+color+'"></span><span style="color:var(--text)">'+r.rep+'</span></span>';
+  });
+  legendEl.innerHTML=legendHtml;
+}
+
+
 function refreshZona(){
   var data=filterRecords('zona');updateFilterInfo('zona',data);
   var zonaMap={};
