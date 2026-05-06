@@ -276,19 +276,19 @@ tr:hover td{background:#f7fafd;}
       <div class="table-wrap"><table id="tbl-rep"><thead></thead><tbody></tbody></table></div>
       <div class="chart-card chart-full" style="margin-top:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-          <h3 style="margin:0">Distribución normal — posición de cada repartidor</h3>
+          <h3 style="margin:0">Desviaci&#243;n vs promedio del grupo</h3>
           <div style="display:flex;gap:8px;align-items:center;">
             <span style="font-size:.75rem;color:var(--sub);font-weight:600">Indicador:</span>
             <select id="gauss-metric" onchange="refreshRep()" style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;font-size:.82rem;font-family:inherit;background:var(--bg);cursor:pointer;">
               <option value="ds">Drop Size (B/C)</option>
-              <option value="bpd">Bultos / Día</option>
+              <option value="bpd">Bultos / D&#237;a</option>
               <option value="bultos">Bultos Totales</option>
               <option value="clientes">Clientes Totales</option>
             </select>
           </div>
         </div>
-        <canvas id="chart-gauss" style="max-height:300px"></canvas>
-        <div id="gauss-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:.75rem;"></div>
+        <canvas id="chart-gauss" style="max-height:400px"></canvas>
+        <div id="gauss-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:.75rem;"></div>
       </div>
     </div>
     <div class="pane" id="pane-zonas">
@@ -879,12 +879,13 @@ function refreshRep(){
   renderGauss(reps);
 }
 
+// ── Lollipop chart ─────────────────────────────────────────────────────────
 function renderGauss(reps){
   destroyChart('chart-gauss');
   var sel=document.getElementById('gauss-metric');
   if(!sel)return;
   var metric=sel.value;
-  var metricLabel={ds:'Drop Size (B/C)',bpd:'Bultos / D\u00eda',bultos:'Bultos Totales',clientes:'Clientes Totales'}[metric]||metric;
+  var metricLabel={ds:'Drop Size (B/C)',bpd:'Bultos / D\u00eda',bultos:'Bultos Totales',clientes:'Clientes Totales'}[metric];
 
   var vals=reps.map(function(r){
     if(metric==='ds')return r.ds;
@@ -894,104 +895,68 @@ function renderGauss(reps){
     return 0;
   });
   var mean=avg(vals);
-  var sd=stddev(vals);
-
-  if(reps.length<2||sd===0){
-    document.getElementById('gauss-legend').innerHTML='<span style="color:var(--sub)">Se necesitan al menos 2 repartidores con datos distintos.</span>';
+  if(reps.length<2||mean===0){
+    document.getElementById('gauss-legend').innerHTML='<span style="color:var(--sub)">Se necesitan al menos 2 repartidores.</span>';
     return;
   }
 
-  // convert all values to z-scores
-  var zScores=vals.map(function(v){return (v-mean)/sd;});
+  // pct deviation from mean, sorted descending
+  var data=reps.map(function(r,i){
+    var pct=(vals[i]-mean)/mean*100;
+    return {rep:r.rep,val:vals[i],pct:pct};
+  }).sort(function(a,b){return b.pct-a.pct;});
 
-  // build standard normal curve in z-score space (-3.5 to +3.5)
-  var steps=300;
-  var zMin=-3.5, zMax=3.5;
-  var zStep=(zMax-zMin)/steps;
-  var curveData=[];
-  for(var i=0;i<=steps;i++){
-    var z=zMin+i*zStep;
-    var y=(1/Math.sqrt(2*Math.PI))*Math.exp(-0.5*z*z);
-    curveData.push({x:z,y:y});
-  }
-  var maxY=(1/Math.sqrt(2*Math.PI)); // peak of standard normal
+  var labels=data.map(function(d){return d.rep;});
+  var pcts=data.map(function(d){return +d.pct.toFixed(2);});
+  var colors=pcts.map(function(p){return p>=0?'rgba(26,158,122,.85)':'rgba(217,79,61,.85)';});
+  var borderColors=pcts.map(function(p){return p>=0?'#1a9e7a':'#d94f3d';});
 
-  // zone fill helper
-  function zoneFill(lo,hi,color){
-    return {
-      type:'line',
-      data:curveData.filter(function(p){return p.x>=lo&&p.x<=hi;}),
-      fill:'origin',backgroundColor:color,borderWidth:0,pointRadius:0,tension:0.4
-    };
-  }
-
-  var datasets=[];
-  datasets.push(zoneFill(-3.5,-2,'rgba(217,79,61,.15)'));
-  datasets.push(zoneFill(-2,-1,'rgba(232,160,48,.15)'));
-  datasets.push(zoneFill(-1,1,'rgba(26,158,122,.18)'));
-  datasets.push(zoneFill(1,2,'rgba(232,160,48,.15)'));
-  datasets.push(zoneFill(2,3.5,'rgba(217,79,61,.15)'));
-
-  // main curve
-  datasets.push({
-    type:'line',data:curveData,
-    borderColor:'rgba(26,107,138,.85)',borderWidth:2.5,
-    fill:false,pointRadius:0,tension:0.4,label:'Curva normal'
-  });
-
-  // mean line at z=0
-  datasets.push({
-    type:'line',
-    data:[{x:0,y:0},{x:0,y:maxY*1.08}],
-    borderColor:'rgba(26,107,138,.5)',borderWidth:1.5,borderDash:[6,4],
-    fill:false,pointRadius:0,label:'Promedio: '+fmtD(mean)
-  });
-
-  // σ reference lines at ±1 and ±2
-  [-2,-1,1,2].forEach(function(z){
-    datasets.push({
-      type:'line',
-      data:[{x:z,y:0},{x:z,y:maxY*1.08}],
-      borderColor:'rgba(150,150,150,.25)',borderWidth:1,borderDash:[3,4],
-      fill:false,pointRadius:0,label:''
-    });
-  });
-
-  // one scatter point per repartidor (in z-score space)
-  var repColors=['#1a6b8a','#22a08a','#d94f3d','#e8a030','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#64748b','#0891b2','#7c3aed','#be123c','#15803d','#b45309'];
-  reps.forEach(function(r,i){
-    var z=zScores[i];
-    var y=(1/Math.sqrt(2*Math.PI))*Math.exp(-0.5*z*z);
-    var color=repColors[i%repColors.length];
-    datasets.push({
-      type:'scatter',
-      data:[{x:z,y:y}],
-      backgroundColor:color,borderColor:'#fff',borderWidth:2,
-      pointRadius:8,pointHoverRadius:10,
-      label:r.rep,
-      _rep:r.rep,_val:vals[i],_z:z
-    });
-  });
-
+  // Chart.js doesn't have native lollipop, simulate with bar + scatter overlay
   var ctx=document.getElementById('chart-gauss').getContext('2d');
   charts['chart-gauss']=new Chart(ctx,{
-    data:{datasets:datasets},
+    data:{
+      labels:labels,
+      datasets:[
+        // thin bar as the stick
+        {
+          type:'bar',
+          data:pcts,
+          backgroundColor:colors,
+          borderColor:borderColors,
+          borderWidth:0,
+          barThickness:3,
+          borderRadius:2,
+          order:2
+        },
+        // scatter dot at the tip
+        {
+          type:'scatter',
+          data:data.map(function(d,i){return {x:d.pct,y:d.rep};}),
+          backgroundColor:colors,
+          borderColor:'#fff',
+          borderWidth:2,
+          pointRadius:8,
+          pointHoverRadius:10,
+          order:1
+        }
+      ]
+    },
     options:{
-      responsive:true,maintainAspectRatio:true,
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
       plugins:{
         legend:{display:false},
         tooltip:{
-          filter:function(item){return item.dataset._rep;},
           callbacks:{
-            title:function(){return '';},
-            label:function(ctx){
-              var ds=ctx.dataset;
-              if(!ds._rep)return null;
-              var sign=ds._z>=0?'+':'';
+            title:function(items){return items[0].label||'';},
+            label:function(item){
+              var d=data[item.dataIndex];
+              if(!d)return '';
+              var sign=d.pct>=0?'+':'';
               return [
-                ds._rep,
-                metricLabel+': '+fmtD(ds._val),
-                'Posici\u00f3n: '+sign+fmtD(ds._z,2)+'\u03c3'
+                metricLabel+': '+fmtD(d.val),
+                'vs promedio ('+fmtD(mean)+'): '+sign+fmtD(d.pct,1)+'%'
               ];
             }
           }
@@ -999,37 +964,44 @@ function renderGauss(reps){
       },
       scales:{
         x:{
-          type:'linear',min:-3.8,max:3.8,
-          title:{display:true,text:'Desviaciones est\u00e1ndar (\u03c3) respecto al promedio del grupo',font:{size:11},color:'#5a7080'},
+          type:'linear',
           grid:{color:'#eef2f7'},
-          ticks:{
-            stepSize:1,
-            callback:function(val){
-              if(val===0)return '\u0078\u0304 ('+fmtD(mean)+')';
-              var realVal=mean+val*sd;
-              return (val>0?'+':'')+val+'\u03c3\n('+fmtD(realVal)+')';
-            },
-            font:{size:10},maxRotation:0
-          }
+          ticks:{callback:function(v){return (v>0?'+':'')+v+'%';},font:{size:11}},
+          title:{display:true,text:'% vs promedio del grupo ('+metricLabel+')',font:{size:11},color:'#5a7080'}
         },
-        y:{display:false,beginAtZero:true,max:maxY*1.15}
+        y:{
+          grid:{display:false},
+          ticks:{font:{size:11},color:'#1a2535'}
+        }
       }
-    }
+    },
+    plugins:[{
+      id:'zeroline',
+      afterDraw:function(chart){
+        var ctx2=chart.ctx;
+        var xAxis=chart.scales.x;
+        var yAxis=chart.scales.y;
+        var xZero=xAxis.getPixelForValue(0);
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.moveTo(xZero,yAxis.top);
+        ctx2.lineTo(xZero,yAxis.bottom);
+        ctx2.strokeStyle='rgba(26,107,138,.5)';
+        ctx2.lineWidth=1.5;
+        ctx2.setLineDash([6,4]);
+        ctx2.stroke();
+        ctx2.restore();
+      }
+    }]
   });
 
-  // legend
+  // legend: zones
   var legendEl=document.getElementById('gauss-legend');
-  var html='';
-  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(26,158,122,.3);display:inline-block"></span>\u00b11\u03c3 normal</span>';
-  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(232,160,48,.3);display:inline-block"></span>\u00b12\u03c3 notable</span>';
-  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(217,79,61,.25);display:inline-block"></span>&gt;\u00b12\u03c3 outlier</span>';
-  html+='<span style="flex:1;min-width:20px"></span>';
-  reps.forEach(function(r,i){
-    var color=repColors[i%repColors.length];
-    var z=zScores[i];var sign=z>=0?'+':'';
-    html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:'+color+';display:inline-block;flex-shrink:0"></span><span style="color:var(--text);font-size:.73rem">'+r.rep+' ('+sign+fmtD(z,1)+'\u03c3)</span></span>';
-  });
-  legendEl.innerHTML=html;
+  legendEl.innerHTML=[
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(26,158,122,.3);display:inline-block"></span>Sobre el promedio</span>',
+    '<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(217,79,61,.3);display:inline-block"></span>Bajo el promedio</span>',
+    '<span style="color:var(--sub)">Promedio del grupo: <b style="color:var(--text)">'+fmtD(mean)+'</b> ('+metricLabel+')</span>'
+  ].join('');
 }
 
 
