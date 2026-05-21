@@ -245,15 +245,6 @@ tr:hover td{background:#f7fafd;}
         <div class="chart-card chart-full"><h3>Evoluci&#243;n diaria — Bultos y Clientes</h3><canvas id="chart-evol"></canvas></div>
         <div class="chart-card chart-full"><h3>Evoluci&#243;n diaria — Drop Size (B/C)</h3><canvas id="chart-drop-evol"></canvas></div>
       </div>
-      <div class="chart-card chart-full" style="margin-bottom:16px">
-        <h3>Calendario de registros</h3>
-        <div id="cal-container" style="overflow-x:auto;"></div>
-        <div style="display:flex;gap:16px;margin-top:10px;font-size:.75rem;flex-wrap:wrap;">
-          <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#1a9e7a;display:inline-block"></span>Con datos</span>
-          <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#fdf0ee;border:1px solid #f5bdb8;display:inline-block"></span>Sin datos (L&#8211;V)</span>
-          <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#f4f8fb;border:1px solid #d1dce8;display:inline-block"></span>Fin de semana</span>
-        </div>
-      </div>
     </div>
     <div class="pane" id="pane-repartidores">
       <div class="filter-bar">
@@ -843,33 +834,87 @@ function refreshResumen(){
       +'</div>';
   }).join('');
 
-  // ── weekly x-axis labels ──
-  // group data by ISO week, label as "Wn\nMes"
-  function getWeekLabel(fecha){
+  // ── weekly x-axis labels (week-of-month per month, like Excel) ──
+  var MESES_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  function getWeekOfMonth(fecha){
     var p=fecha.split('-').map(Number);
     var d=new Date(p[0],p[1]-1,p[2]);
-    // ISO week number
-    var jan4=new Date(d.getFullYear(),0,4);
-    var wk=Math.ceil(((d-jan4)/86400000+jan4.getDay()+1)/7);
-    var meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    return 'S'+wk+' '+meses[d.getMonth()];
+    var firstDow=(new Date(p[0],p[1]-1,1).getDay()+6)%7; // Mon=0
+    return Math.ceil((p[2]+firstDow)/7);
   }
-  // build week-aggregated data for x-axis grouping
-  var weekMap={};
+  function getMonthLabel(fecha){
+    var p=fecha.split('-').map(Number);
+    return MESES_SHORT[p[1]-1]+' '+p[0];
+  }
+  // group by month+week-of-month
+  var weekMap={}, weekOrder=[];
   data.forEach(function(r){
-    var wl=getWeekLabel(r.fecha);
-    if(!weekMap[wl])weekMap[wl]={label:wl,bultos:0,clientes:0,drops:[]};
-    weekMap[wl].bultos+=r.total_bultos||0;
-    weekMap[wl].clientes+=r.total_clientes||0;
-    if(r.total_clientes)weekMap[wl].drops.push(r.total_bultos/r.total_clientes);
+    var p=r.fecha.split('-').map(Number);
+    var wom=getWeekOfMonth(r.fecha);
+    var key=p[0]+'-'+String(p[1]).padStart(2,'0')+'-W'+wom;
+    if(!weekMap[key]){
+      weekMap[key]={key:key,label:'S'+wom,month:getMonthLabel(r.fecha),bultos:0,clientes:0,drops:[]};
+      weekOrder.push(key);
+    }
+    weekMap[key].bultos+=r.total_bultos||0;
+    weekMap[key].clientes+=r.total_clientes||0;
+    if(r.total_clientes)weekMap[key].drops.push(r.total_bultos/r.total_clientes);
   });
-  var weeks=Object.values(weekMap);
+  var weeks=weekOrder.map(function(k){return weekMap[k];});
   var wLabels=weeks.map(function(w){return w.label;});
   var wBultos=weeks.map(function(w){return w.bultos;});
   var wClientes=weeks.map(function(w){return w.clientes;});
   var wDrops=weeks.map(function(w){return w.drops.length?+(avg(w.drops).toFixed(2)):null;});
 
-  var chartOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{color:'#eef2f7'},ticks:{font:{size:10},maxRotation:45}}}};
+  // build month grouping for x-axis labels using Chart.js afterDraw plugin
+  // group consecutive same-month weeks
+  var monthGroups=[];
+  weeks.forEach(function(w,i){
+    if(!monthGroups.length||monthGroups[monthGroups.length-1].month!==w.month){
+      monthGroups.push({month:w.month,start:i,end:i});
+    }else{
+      monthGroups[monthGroups.length-1].end=i;
+    }
+  });
+
+  var monthLabelPlugin={
+    id:'monthLabels',
+    afterDraw:function(chart){
+      var ctx2=chart.ctx;
+      var xAxis=chart.scales.x;
+      var bottom=chart.chartArea.bottom;
+      ctx2.save();
+      ctx2.font='600 10px Inter,sans-serif';
+      ctx2.fillStyle='#5a7080';
+      ctx2.textAlign='center';
+      monthGroups.forEach(function(g){
+        var x1=xAxis.getPixelForValue(g.start);
+        var x2=xAxis.getPixelForValue(g.end);
+        var cx=(x1+x2)/2;
+        ctx2.fillText(g.month,cx,bottom+42);
+        // separator line
+        if(g.start>0){
+          ctx2.beginPath();
+          ctx2.moveTo(x1-((xAxis.getPixelForValue(1)-xAxis.getPixelForValue(0))/2),chart.chartArea.top);
+          ctx2.lineTo(x1-((xAxis.getPixelForValue(1)-xAxis.getPixelForValue(0))/2),bottom+48);
+          ctx2.strokeStyle='rgba(209,220,232,.6)';
+          ctx2.lineWidth=1;
+          ctx2.stroke();
+        }
+      });
+      ctx2.restore();
+    }
+  };
+
+  var sharedOpts={
+    responsive:true,maintainAspectRatio:true,
+    layout:{padding:{bottom:20}},
+    plugins:{legend:{position:'top'}},
+    scales:{
+      x:{grid:{color:'#eef2f7'},ticks:{font:{size:10},maxRotation:0,color:'#1a2535'},
+        afterFit:function(axis){axis.height+=24;}}
+    }
+  };
 
   destroyChart('chart-evol');
   charts['chart-evol']=new Chart(document.getElementById('chart-evol').getContext('2d'),{
@@ -877,7 +922,12 @@ function refreshResumen(){
       {type:'bar',label:'Bultos',data:wBultos,backgroundColor:'rgba(26,107,138,.65)',borderColor:'rgba(26,107,138,.9)',borderWidth:1,yAxisID:'y'},
       {type:'line',label:'Clientes',data:wClientes,borderColor:'#22a08a',borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#22a08a',pointRadius:3,fill:false,tension:.3,yAxisID:'y2'}
     ]},
-    options:Object.assign({},chartOpts,{scales:{x:{grid:{color:'#eef2f7'},ticks:{font:{size:10},maxRotation:45}},y:{position:'left',grid:{color:'#eef2f7'}},y2:{position:'right',grid:{drawOnChartArea:false}}}})
+    options:Object.assign({},sharedOpts,{scales:{
+      x:sharedOpts.scales.x,
+      y:{position:'left',grid:{color:'#eef2f7'}},
+      y2:{position:'right',grid:{drawOnChartArea:false}}
+    }}),
+    plugins:[monthLabelPlugin]
   });
 
   destroyChart('chart-drop-evol');
@@ -885,11 +935,15 @@ function refreshResumen(){
     data:{labels:wLabels,datasets:[
       {type:'line',label:'Drop Size',data:wDrops,borderColor:'#e8a030',backgroundColor:'rgba(232,160,48,.1)',borderWidth:2,pointBackgroundColor:'#e8a030',pointRadius:3,fill:true,tension:.3,spanGaps:true}
     ]},
-    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{color:'#eef2f7'},ticks:{font:{size:10},maxRotation:45}},y:{grid:{color:'#eef2f7'},title:{display:true,text:'Bultos / Cliente',font:{size:10}}}}}
+    options:Object.assign({},sharedOpts,{scales:{
+      x:sharedOpts.scales.x,
+      y:{grid:{color:'#eef2f7'},title:{display:true,text:'Bultos / Cliente',font:{size:10}}}
+    }}),
+    plugins:[monthLabelPlugin]
   });
 
-  // ── Calendar ──
-  renderCalendar(data);
+  // ── Sidebar calendar (render current month) ──
+  renderSidebarCalendar();
 }
 
 // ── Repartidores ───────────────────────────────────────────────────────────
@@ -943,66 +997,55 @@ function refreshRep(){
   renderGauss(reps);
 }
 
-// ── Calendar ───────────────────────────────────────────────────────────────
-function renderCalendar(filteredData){
+// ── Sidebar Calendar ───────────────────────────────────────────────────────
+var _calYear=new Date().getFullYear();
+var _calMonth=new Date().getMonth(); // 0-based
+
+function calPrev(){
+  _calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}
+  renderSidebarCalendar();
+}
+function calNext(){
+  _calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}
+  renderSidebarCalendar();
+}
+function renderSidebarCalendar(){
   var cal=document.getElementById('cal-container');
+  var label=document.getElementById('cal-month-label');
   if(!cal)return;
-  if(!records.length){cal.innerHTML='<div class="empty">Sin registros</div>';return;}
-
-  // use all records dates for calendar, not filtered (to show missing days)
-  var allDates=new Set(records.map(function(r){return r.fecha;}));
-  // determine range from filtered data or all records
-  var source=filteredData&&filteredData.length?filteredData:records;
-  var minDate=source[0].fecha, maxDate=source[source.length-1].fecha;
-  // expand to full months
-  var start=new Date(minDate.slice(0,7)+'-01');
-  var endParts=maxDate.split('-').map(Number);
-  var endMonth=new Date(endParts[0],endParts[1]-1,1);
-  var lastDay=new Date(endMonth.getFullYear(),endMonth.getMonth()+1,0);
-
   var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   var DIAS=['L','M','X','J','V','S','D'];
-
-  var html='<div style="display:flex;flex-wrap:wrap;gap:20px;">';
-  var cur=new Date(start);
-  while(cur<=lastDay){
-    var y=cur.getFullYear(),m=cur.getMonth();
-    html+='<div style="min-width:210px">';
-    html+='<div style="font-size:.78rem;font-weight:700;color:var(--accent2);margin-bottom:6px;text-align:center">'+MESES[m]+' '+y+'</div>';
-    html+='<table style="border-collapse:collapse;width:100%;font-size:.72rem;">';
-    html+='<tr>';
-    DIAS.forEach(function(d){html+='<th style="padding:3px;text-align:center;color:var(--sub);font-weight:600;width:14.28%">'+d+'</th>';});
-    html+='</tr><tr>';
-    // first day of month (adjust: Mon=0)
-    var firstDow=(new Date(y,m,1).getDay()+6)%7; // 0=Mon
-    for(var pad=0;pad<firstDow;pad++)html+='<td></td>';
-    var daysInMonth=new Date(y,m+1,0).getDate();
-    var col=firstDow;
-    for(var day=1;day<=daysInMonth;day++){
-      var dd=String(day).padStart(2,'0'),mm=String(m+1).padStart(2,'0');
-      var iso=y+'-'+mm+'-'+dd;
-      var dow=(new Date(y,m,day).getDay()+6)%7; // 0=Mon
-      var isWE=dow>=5; // Sat or Sun
-      var hasData=allDates.has(iso);
-      var isInRange=iso>=minDate&&iso<=maxDate;
-      var today=toISO(new Date());
-      var isFuture=iso>today;
-      var bg,border,color2,title='';
-      if(isWE){bg='#f4f8fb';border='1px solid #d1dce8';color2='#b0bec5';}
-      else if(hasData){bg='#1a9e7a';border='1px solid #148060';color2='#fff';title='Con datos';}
-      else if(isFuture){bg='transparent';border='1px solid transparent';color2='#cdd5e0';}
-      else if(isInRange){bg='#fdf0ee';border='1px solid #f5bdb8';color2='#d94f3d';title='Sin datos \u26a0';}
-      else{bg='transparent';border='1px solid transparent';color2='#cdd5e0';}
-      html+='<td title="'+iso+(title?' \u2014 '+title:'')+'" style="padding:2px;text-align:center;">';
-      html+='<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;background:'+bg+';border:'+border+';color:'+color2+';font-weight:'+(hasData?'600':'400')+'">'+day+'</span>';
-      html+='</td>';
-      col++;
-      if(col%7===0&&day<daysInMonth)html+='</tr><tr>';
-    }
-    html+='</tr></table></div>';
-    cur=new Date(y,m+1,1);
+  if(label)label.textContent=MESES[_calMonth]+' '+_calYear;
+  var allDates=new Set(records.map(function(r){return r.fecha;}));
+  var today=toISO(new Date());
+  var daysInMonth=new Date(_calYear,_calMonth+1,0).getDate();
+  var firstDow=(new Date(_calYear,_calMonth,1).getDay()+6)%7; // Mon=0
+  var html='<table style="border-collapse:collapse;width:100%;font-size:.7rem;">';
+  // header
+  html+='<tr>'+DIAS.map(function(d){return'<th style="padding:2px;text-align:center;color:var(--sub);font-weight:700;font-size:.65rem;">'+d+'</th>';}).join('')+'</tr>';
+  html+='<tr>';
+  for(var pad=0;pad<firstDow;pad++)html+='<td></td>';
+  var col=firstDow;
+  for(var day=1;day<=daysInMonth;day++){
+    var mm=String(_calMonth+1).padStart(2,'0');
+    var dd=String(day).padStart(2,'0');
+    var iso=_calYear+'-'+mm+'-'+dd;
+    var dow=(new Date(_calYear,_calMonth,day).getDay()+6)%7;
+    var isWE=dow>=5;
+    var hasData=allDates.has(iso);
+    var isFuture=iso>today;
+    var bg,border,color2,fw='400';
+    if(isWE){bg='#f4f8fb';border='1px solid #d1dce8';color2='#b0bec5';}
+    else if(hasData){bg='#1a9e7a';border='1px solid #148060';color2='#fff';fw='700';}
+    else if(isFuture){bg='transparent';border='1px solid transparent';color2='#cdd5e0';}
+    else{bg='#fdf0ee';border='1px solid #f5bdb8';color2='#d94f3d';}
+    html+='<td style="padding:1px;text-align:center;">';
+    html+='<span title="'+iso+'" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:'+bg+';border:'+border+';color:'+color2+';font-weight:'+fw+'">'+day+'</span>';
+    html+='</td>';
+    col++;
+    if(col%7===0&&day<daysInMonth)html+='</tr><tr>';
   }
-  html+='</div>';
+  html+='</tr></table>';
   cal.innerHTML=html;
 }
 
@@ -1333,6 +1376,7 @@ function downloadFile(c,f,m){var b=new Blob([c],{type:m}),u=URL.createObjectURL(
 // ── Init ───────────────────────────────────────────────────────────────────
 updateKeyStatus();
 refreshAll();
+renderSidebarCalendar();
 </script>
 </body>
 </html>
