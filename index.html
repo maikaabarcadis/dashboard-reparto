@@ -242,8 +242,14 @@ tr:hover td{background:#f7fafd;}
       </div>
       <div class="stats-panel" id="stats-resumen"></div>
       <div class="chart-grid">
-        <div class="chart-card chart-full"><h3>Evoluci&#243;n diaria — Bultos y Clientes</h3><canvas id="chart-evol"></canvas></div>
-        <div class="chart-card chart-full"><h3>Evoluci&#243;n diaria — Drop Size (B/C)</h3><canvas id="chart-drop-evol"></canvas></div>
+        <div class="chart-card chart-full">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+            <h3 style="margin:0">Evoluci&#243;n — Bultos y Clientes</h3>
+            <div id="evol-drill-hint"></div>
+          </div>
+          <canvas id="chart-evol"></canvas>
+        </div>
+        <div class="chart-card chart-full"><h3>Evoluci&#243;n — Drop Size (B/C)</h3><canvas id="chart-drop-evol"></canvas></div>
       </div>
     </div>
     <div class="pane" id="pane-repartidores">
@@ -799,6 +805,13 @@ function refreshAll(){
 }
 
 // ── Resumen ────────────────────────────────────────────────────────────────
+var MESES_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function getWeekOfMonth(fecha){
+  var p=fecha.split('-').map(Number);
+  var firstDow=(new Date(p[0],p[1]-1,1).getDay()+6)%7;
+  return Math.ceil((p[2]+firstDow)/7);
+}
+
 function refreshResumen(){
   var data=filterRecords('resumen');updateFilterInfo('resumen',data);
   var sp=document.getElementById('stats-resumen');
@@ -999,49 +1012,37 @@ function refreshRep(){
 
 // ── Sidebar Calendar ───────────────────────────────────────────────────────
 var _calYear=new Date().getFullYear();
-var _calMonth=new Date().getMonth(); // 0-based
+var _calMonth=new Date().getMonth();
 
-function calPrev(){
-  _calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}
-  renderSidebarCalendar();
-}
-function calNext(){
-  _calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}
-  renderSidebarCalendar();
-}
+function calPrev(){_calMonth--;if(_calMonth<0){_calMonth=11;_calYear--;}renderSidebarCalendar();}
+function calNext(){_calMonth++;if(_calMonth>11){_calMonth=0;_calYear++;}renderSidebarCalendar();}
+
 function renderSidebarCalendar(){
   var cal=document.getElementById('cal-container');
-  var label=document.getElementById('cal-month-label');
+  var lbl=document.getElementById('cal-month-label');
   if(!cal)return;
   var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   var DIAS=['L','M','X','J','V','S','D'];
-  if(label)label.textContent=MESES[_calMonth]+' '+_calYear;
+  if(lbl)lbl.textContent=MESES[_calMonth]+' '+_calYear;
   var allDates=new Set(records.map(function(r){return r.fecha;}));
   var today=toISO(new Date());
   var daysInMonth=new Date(_calYear,_calMonth+1,0).getDate();
-  var firstDow=(new Date(_calYear,_calMonth,1).getDay()+6)%7; // Mon=0
+  var firstDow=(new Date(_calYear,_calMonth,1).getDay()+6)%7;
   var html='<table style="border-collapse:collapse;width:100%;font-size:.7rem;">';
-  // header
-  html+='<tr>'+DIAS.map(function(d){return'<th style="padding:2px;text-align:center;color:var(--sub);font-weight:700;font-size:.65rem;">'+d+'</th>';}).join('')+'</tr>';
-  html+='<tr>';
+  html+='<tr>'+DIAS.map(function(d){return'<th style="padding:2px;text-align:center;color:var(--sub);font-weight:700;font-size:.65rem;">'+d+'</th>';}).join('')+'</tr><tr>';
   for(var pad=0;pad<firstDow;pad++)html+='<td></td>';
   var col=firstDow;
   for(var day=1;day<=daysInMonth;day++){
-    var mm=String(_calMonth+1).padStart(2,'0');
-    var dd=String(day).padStart(2,'0');
-    var iso=_calYear+'-'+mm+'-'+dd;
+    var mm=String(_calMonth+1).padStart(2,'0'),dd2=String(day).padStart(2,'0');
+    var iso=_calYear+'-'+mm+'-'+dd2;
     var dow=(new Date(_calYear,_calMonth,day).getDay()+6)%7;
-    var isWE=dow>=5;
-    var hasData=allDates.has(iso);
-    var isFuture=iso>today;
+    var isWE=dow>=5,hasData=allDates.has(iso),isFuture=iso>today;
     var bg,border,color2,fw='400';
     if(isWE){bg='#f4f8fb';border='1px solid #d1dce8';color2='#b0bec5';}
     else if(hasData){bg='#1a9e7a';border='1px solid #148060';color2='#fff';fw='700';}
-    else if(isFuture){bg='transparent';border='1px solid transparent';color2='#cdd5e0';}
+    else if(isFuture){bg='transparent';border='none';color2='#cdd5e0';}
     else{bg='#fdf0ee';border='1px solid #f5bdb8';color2='#d94f3d';}
-    html+='<td style="padding:1px;text-align:center;">';
-    html+='<span title="'+iso+'" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:'+bg+';border:'+border+';color:'+color2+';font-weight:'+fw+'">'+day+'</span>';
-    html+='</td>';
+    html+='<td style="padding:1px;text-align:center;"><span title="'+iso+'" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:'+bg+';border:'+border+';color:'+color2+';font-weight:'+fw+'">'+day+'</span></td>';
     col++;
     if(col%7===0&&day<daysInMonth)html+='</tr><tr>';
   }
