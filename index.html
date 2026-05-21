@@ -958,7 +958,7 @@ function refreshResumen(){
   });
 
   destroyChart('chart-drop-evol');
-  charts['chart-drop-evol']=new Chart(document.getElementById('chart-drop-evol').getContext('2d'),{
+  charts['chart-drop-evol']=new Chart(dropEl.getContext('2d'),{
     data:{labels:wLabels,datasets:[
       {type:'line',label:'Drop Size',data:wDrops,borderColor:'#e8a030',backgroundColor:'rgba(232,160,48,.1)',borderWidth:2,pointBackgroundColor:'#e8a030',pointRadius:3,fill:true,tension:.3,spanGaps:true}
     ]},
