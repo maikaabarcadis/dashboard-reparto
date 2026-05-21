@@ -242,7 +242,17 @@ tr:hover td{background:#f7fafd;}
       </div>
       <div class="stats-panel" id="stats-resumen"></div>
       <div class="chart-grid">
-        <div class="chart-card chart-full"><h3>Evoluci&#243;n diaria</h3><canvas id="chart-evol"></canvas></div>
+        <div class="chart-card chart-full"><h3>Evoluci&#243;n diaria — Bultos y Clientes</h3><canvas id="chart-evol"></canvas></div>
+        <div class="chart-card chart-full"><h3>Evoluci&#243;n diaria — Drop Size (B/C)</h3><canvas id="chart-drop-evol"></canvas></div>
+      </div>
+      <div class="chart-card chart-full" style="margin-bottom:16px">
+        <h3>Calendario de registros</h3>
+        <div id="cal-container" style="overflow-x:auto;"></div>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:.75rem;flex-wrap:wrap;">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#1a9e7a;display:inline-block"></span>Con datos</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#fdf0ee;border:1px solid #f5bdb8;display:inline-block"></span>Sin datos (L&#8211;V)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#f4f8fb;border:1px solid #d1dce8;display:inline-block"></span>Fin de semana</span>
+        </div>
       </div>
     </div>
     <div class="pane" id="pane-repartidores">
@@ -818,14 +828,53 @@ function refreshResumen(){
       +'</div>';
   }).join('');
 
+  // ── weekly x-axis labels ──
+  // group data by ISO week, label as "Wn\nMes"
+  function getWeekLabel(fecha){
+    var p=fecha.split('-').map(Number);
+    var d=new Date(p[0],p[1]-1,p[2]);
+    // ISO week number
+    var jan4=new Date(d.getFullYear(),0,4);
+    var wk=Math.ceil(((d-jan4)/86400000+jan4.getDay()+1)/7);
+    var meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return 'S'+wk+' '+meses[d.getMonth()];
+  }
+  // build week-aggregated data for x-axis grouping
+  var weekMap={};
+  data.forEach(function(r){
+    var wl=getWeekLabel(r.fecha);
+    if(!weekMap[wl])weekMap[wl]={label:wl,bultos:0,clientes:0,drops:[]};
+    weekMap[wl].bultos+=r.total_bultos||0;
+    weekMap[wl].clientes+=r.total_clientes||0;
+    if(r.total_clientes)weekMap[wl].drops.push(r.total_bultos/r.total_clientes);
+  });
+  var weeks=Object.values(weekMap);
+  var wLabels=weeks.map(function(w){return w.label;});
+  var wBultos=weeks.map(function(w){return w.bultos;});
+  var wClientes=weeks.map(function(w){return w.clientes;});
+  var wDrops=weeks.map(function(w){return w.drops.length?+(avg(w.drops).toFixed(2)):null;});
+
+  var chartOpts={responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{color:'#eef2f7'},ticks:{font:{size:10},maxRotation:45}}}};
+
   destroyChart('chart-evol');
   charts['chart-evol']=new Chart(document.getElementById('chart-evol').getContext('2d'),{
-    data:{labels:data.map(function(r){return fmtDate(r.fecha);}),datasets:[
-      {type:'bar',label:'Bultos',data:bultos,backgroundColor:'rgba(26,107,138,.65)',borderColor:'rgba(26,107,138,.9)',borderWidth:1,yAxisID:'y'},
-      {type:'line',label:'Clientes',data:clientes,borderColor:'#22a08a',borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#22a08a',pointRadius:3,fill:false,tension:.3,yAxisID:'y2'}
+    data:{labels:wLabels,datasets:[
+      {type:'bar',label:'Bultos',data:wBultos,backgroundColor:'rgba(26,107,138,.65)',borderColor:'rgba(26,107,138,.9)',borderWidth:1,yAxisID:'y'},
+      {type:'line',label:'Clientes',data:wClientes,borderColor:'#22a08a',borderWidth:2,borderDash:[5,4],pointBackgroundColor:'#22a08a',pointRadius:3,fill:false,tension:.3,yAxisID:'y2'}
     ]},
-    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{y:{position:'left',grid:{color:'#eef2f7'}},y2:{position:'right',grid:{drawOnChartArea:false}}}}
+    options:Object.assign({},chartOpts,{scales:{x:{grid:{color:'#eef2f7'},ticks:{font:{size:10},maxRotation:45}},y:{position:'left',grid:{color:'#eef2f7'}},y2:{position:'right',grid:{drawOnChartArea:false}}}})
   });
+
+  destroyChart('chart-drop-evol');
+  charts['chart-drop-evol']=new Chart(document.getElementById('chart-drop-evol').getContext('2d'),{
+    data:{labels:wLabels,datasets:[
+      {type:'line',label:'Drop Size',data:wDrops,borderColor:'#e8a030',backgroundColor:'rgba(232,160,48,.1)',borderWidth:2,pointBackgroundColor:'#e8a030',pointRadius:3,fill:true,tension:.3,spanGaps:true}
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'top'}},scales:{x:{grid:{color:'#eef2f7'},ticks:{font:{size:10},maxRotation:45}},y:{grid:{color:'#eef2f7'},title:{display:true,text:'Bultos / Cliente',font:{size:10}}}}}
+  });
+
+  // ── Calendar ──
+  renderCalendar(data);
 }
 
 // ── Repartidores ───────────────────────────────────────────────────────────
@@ -879,7 +928,70 @@ function refreshRep(){
   renderGauss(reps);
 }
 
-// ── Lollipop chart ─────────────────────────────────────────────────────────
+// ── Calendar ───────────────────────────────────────────────────────────────
+function renderCalendar(filteredData){
+  var cal=document.getElementById('cal-container');
+  if(!cal)return;
+  if(!records.length){cal.innerHTML='<div class="empty">Sin registros</div>';return;}
+
+  // use all records dates for calendar, not filtered (to show missing days)
+  var allDates=new Set(records.map(function(r){return r.fecha;}));
+  // determine range from filtered data or all records
+  var source=filteredData&&filteredData.length?filteredData:records;
+  var minDate=source[0].fecha, maxDate=source[source.length-1].fecha;
+  // expand to full months
+  var start=new Date(minDate.slice(0,7)+'-01');
+  var endParts=maxDate.split('-').map(Number);
+  var endMonth=new Date(endParts[0],endParts[1]-1,1);
+  var lastDay=new Date(endMonth.getFullYear(),endMonth.getMonth()+1,0);
+
+  var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var DIAS=['L','M','X','J','V','S','D'];
+
+  var html='<div style="display:flex;flex-wrap:wrap;gap:20px;">';
+  var cur=new Date(start);
+  while(cur<=lastDay){
+    var y=cur.getFullYear(),m=cur.getMonth();
+    html+='<div style="min-width:210px">';
+    html+='<div style="font-size:.78rem;font-weight:700;color:var(--accent2);margin-bottom:6px;text-align:center">'+MESES[m]+' '+y+'</div>';
+    html+='<table style="border-collapse:collapse;width:100%;font-size:.72rem;">';
+    html+='<tr>';
+    DIAS.forEach(function(d){html+='<th style="padding:3px;text-align:center;color:var(--sub);font-weight:600;width:14.28%">'+d+'</th>';});
+    html+='</tr><tr>';
+    // first day of month (adjust: Mon=0)
+    var firstDow=(new Date(y,m,1).getDay()+6)%7; // 0=Mon
+    for(var pad=0;pad<firstDow;pad++)html+='<td></td>';
+    var daysInMonth=new Date(y,m+1,0).getDate();
+    var col=firstDow;
+    for(var day=1;day<=daysInMonth;day++){
+      var dd=String(day).padStart(2,'0'),mm=String(m+1).padStart(2,'0');
+      var iso=y+'-'+mm+'-'+dd;
+      var dow=(new Date(y,m,day).getDay()+6)%7; // 0=Mon
+      var isWE=dow>=5; // Sat or Sun
+      var hasData=allDates.has(iso);
+      var isInRange=iso>=minDate&&iso<=maxDate;
+      var today=toISO(new Date());
+      var isFuture=iso>today;
+      var bg,border,color2,title='';
+      if(isWE){bg='#f4f8fb';border='1px solid #d1dce8';color2='#b0bec5';}
+      else if(hasData){bg='#1a9e7a';border='1px solid #148060';color2='#fff';title='Con datos';}
+      else if(isFuture){bg='transparent';border='1px solid transparent';color2='#cdd5e0';}
+      else if(isInRange){bg='#fdf0ee';border='1px solid #f5bdb8';color2='#d94f3d';title='Sin datos \u26a0';}
+      else{bg='transparent';border='1px solid transparent';color2='#cdd5e0';}
+      html+='<td title="'+iso+(title?' \u2014 '+title:'')+'" style="padding:2px;text-align:center;">';
+      html+='<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;background:'+bg+';border:'+border+';color:'+color2+';font-weight:'+(hasData?'600':'400')+'">'+day+'</span>';
+      html+='</td>';
+      col++;
+      if(col%7===0&&day<daysInMonth)html+='</tr><tr>';
+    }
+    html+='</tr></table></div>';
+    cur=new Date(y,m+1,1);
+  }
+  html+='</div>';
+  cal.innerHTML=html;
+}
+
+
 function renderGauss(reps){
   destroyChart('chart-gauss');
   var sel=document.getElementById('gauss-metric');
