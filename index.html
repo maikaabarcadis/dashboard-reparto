@@ -628,17 +628,32 @@ function buildDropdown(type,tab){
   html+='</div></div>';wrap.innerHTML=html;
 }
 function toggleDD_open(ddId,btnId){var dd=document.getElementById(ddId),btn=document.getElementById(btnId);var isOpen=dd.classList.contains('open');document.querySelectorAll('.df-dd.open').forEach(function(el){el.classList.remove('open');});document.querySelectorAll('.df-btn.open').forEach(function(el){el.classList.remove('open');});if(!isOpen){dd.classList.add('open');btn.classList.add('open');}}
-document.addEventListener('click',function(e){if(!e.target.closest('.df-wrap')){document.querySelectorAll('.df-dd.open').forEach(function(el){el.classList.remove('open');});document.querySelectorAll('.df-btn.open').forEach(function(el){el.classList.remove('open');});}});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.df-wrap')&&!e.target.closest('.df-dd')){
+    document.querySelectorAll('.df-dd.open').forEach(function(el){el.classList.remove('open');});
+    document.querySelectorAll('.df-btn.open').forEach(function(el){el.classList.remove('open');});
+  }
+});
 function filterDDList(searchId,listId){var q=document.getElementById(searchId).value.toLowerCase();document.querySelectorAll('#'+listId+' .df-item').forEach(function(item){item.style.display=item.dataset.val.toLowerCase().includes(q)?'':'none';});}
 function toggleDDItem(type,tab,checkbox){
-  var val=checkbox.closest('.df-item').dataset.val;
+  var item=checkbox.closest('.df-item');
+  var val=item.dataset.val;
   var s=type==='rep'?filters[tab].reps:filters[tab].zonas;
   if(checkbox.checked)s.add(val);else s.delete(val);
-  // update button appearance without full rebuild
   var btnId='ddbtn-'+type+'-'+tab;var btn=document.getElementById(btnId);
   var count=s.size;
-  if(btn){btn.classList.toggle('has-sel',count>0);var cspan=btn.querySelector('.df-count');if(count>0){if(!cspan){cspan=document.createElement('span');cspan.className='df-count';btn.insertBefore(cspan,btn.querySelector('.arr'));}cspan.textContent=count;}else if(cspan){cspan.remove();}}
+  if(btn){
+    btn.classList.toggle('has-sel',count>0);
+    var cspan=btn.querySelector('.df-count');
+    if(count>0){if(!cspan){cspan=document.createElement('span');cspan.className='df-count';btn.insertBefore(cspan,btn.querySelector('.arr'));}cspan.textContent=count;}
+    else if(cspan){cspan.remove();}
+  }
   refreshAll();
+  // reopen dropdown after refreshAll rebuilds it
+  var ddId='dd-'+type+'-'+tab, btnId2='ddbtn-'+type+'-'+tab;
+  var dd=document.getElementById(ddId), btn2=document.getElementById(btnId2);
+  if(dd)dd.classList.add('open');
+  if(btn2)btn2.classList.add('open');
 }
 function selectAllDD(type,tab,listId){var s=type==='rep'?filters[tab].reps:filters[tab].zonas;document.querySelectorAll('#'+listId+' .df-item').forEach(function(item){if(item.style.display!=='none'){s.add(item.dataset.val);var cb=item.querySelector('input');if(cb)cb.checked=true;}});buildDropdown(type,tab);refreshAll();}
 function clearDD(type,tab){if(type==='rep')filters[tab].reps=new Set();else filters[tab].zonas=new Set();buildDropdown(type,tab);refreshAll();}
