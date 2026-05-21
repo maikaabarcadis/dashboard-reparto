@@ -1388,7 +1388,6 @@ document.getElementById('csv-input').addEventListener('change',function(e){
 function parseCSVLine(line){var r=[],cur='',inQ=false;for(var i=0;i<line.length;i++){var ch=line[i];if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else{inQ=!inQ;}}else if(ch===','&&!inQ){r.push(cur);cur='';}else{cur+=ch;}}r.push(cur);return r;}
 function downloadFile(c,f,m){var b=new Blob([c],{type:m}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=f;a.click();setTimeout(function(){URL.revokeObjectURL(u);},1000);}
 
-// ── Init ───────────────────────────────────────────────────────────────────
 updateKeyStatus();
 refreshAll();
 renderSidebarCalendar();
